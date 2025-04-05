@@ -8,6 +8,6 @@ import { getUserDatasets } from "../controllers/userController.js";
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.put("/:id", updateUserProfile);
-router.get("/:id/datasets", getUserDatasets); // GET /api/users/:id/datasets
+router.get("user/:id/datasets", getUserDatasets); // GET /api/users/:id/datasets
 
 export default router;
