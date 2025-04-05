@@ -5,7 +5,8 @@
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",
     "server": "npm --prefix backend run dev",
-    "client": "npm --prefix frontend run start"
+    "client": "npm --prefix frontend run start",
+    "build": "npm install --prefix frontend && npm install --prefix backend && npm run build --prefix frontend"
   },
   "keywords": [],
   "author": "",
