@@ -22,7 +22,7 @@ const ViewPastResultsPage = () => {
   useEffect(() => {
     const fetchDatasets = async () => {
       try {
-        const response = await fetch(`${USERS_URL}/user/${user._id}/datasets`);
+        const response = await fetch(`${USERS_URL}/datasets/${user._id}`);
         const data = await response.json();
         console.log("Fetched datasets:", data);
 
