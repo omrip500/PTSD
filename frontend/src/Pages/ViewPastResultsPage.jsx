@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import Navbar from "../components/Navbar";
 import Chart from "../components/DummyChart"; // ניצור אותו בהמשך
+import { USERS_URL } from "../constants";
 
 const ViewPastResultsPage = () => {
   const [datasets, setDatasets] = useState([]);
@@ -21,9 +22,7 @@ const ViewPastResultsPage = () => {
   useEffect(() => {
     const fetchDatasets = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:8000/api/users/${user._id}/datasets`
-        );
+        const response = await fetch(`${USERS_URL}/${user._id}/datasets`);
         const data = await response.json();
         console.log("Fetched datasets:", data);
 
@@ -40,6 +39,7 @@ const ViewPastResultsPage = () => {
     }
   }, [user._id]);
 
+  // the route api/datasets is not existing yet in the backend.
   const handleDelete = async (datasetId) => {
     try {
       await fetch(`http://localhost:8000/api/datasets/${datasetId}`, {

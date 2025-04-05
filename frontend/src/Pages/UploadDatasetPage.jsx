@@ -21,6 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { UPLOAD_URL } from "../constants";
 
 const DropZoneStyle = styled(Box)(({ theme }) => ({
   border: "2px dashed #ccc",
@@ -96,7 +97,7 @@ const UploadDatasetPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8000/api/upload/dataset", {
+      const response = await fetch(`${UPLOAD_URL}/dataset`, {
         method: "POST",
         body: formData,
       });

@@ -13,6 +13,7 @@ import {
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { USERS_URL } from "../constants";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -35,7 +36,7 @@ const LoginPage = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:8000/api/users/login",
+        `${USERS_URL}/login`,
         { email, password },
         {
           headers: {

@@ -15,6 +15,7 @@ import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { USERS_URL } from "../constants";
 
 const MyProfilePage = () => {
   const [formData, setFormData] = useState({
@@ -53,10 +54,7 @@ const MyProfilePage = () => {
         return;
       }
 
-      const { data } = await axios.put(
-        `http://localhost:8000/api/users/${user._id}`,
-        formData
-      );
+      const { data } = await axios.put(`${USERS_URL}/${user._id}`, formData);
 
       // עדכון localStorage
       localStorage.setItem("userInfo", JSON.stringify(data));

@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { USERS_URL } from "../constants";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -51,15 +52,12 @@ const RegisterPage = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/users/register",
-        {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-        }
-      );
+      const response = await axios.post(`${USERS_URL}/register`, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+      });
 
       console.log("✅ Registered successfully:", response.data);
 
