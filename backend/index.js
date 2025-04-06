@@ -11,8 +11,7 @@ import cors from "cors";
 import uploadRoutes from "./routes/uploadRoutes.js";
 const port = process.env.PORT || 5000;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.resolve(); // set __dirname to the current directory
 
 connectDB(); // Connect to MongoDB
 
@@ -37,7 +36,7 @@ if (process.env.NODE_ENV === "production") {
 
   // If the user goes to any route that is not defined, hw wil be sent to the index.html file in the frontend build folder, there he will be served the frontend.
   app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"))
+    res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"))
   );
 } else {
   app.get("/", (req, res) => {
