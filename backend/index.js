@@ -37,7 +37,7 @@ if (process.env.NODE_ENV === "production") {
 
   // If the user goes to any route that is not defined, hw wil be sent to the index.html file in the frontend build folder, there he will be served the frontend.
   app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "frontend", "build", "index.html"))
+    res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"))
   );
 } else {
   app.get("/", (req, res) => {
