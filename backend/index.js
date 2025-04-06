@@ -11,8 +11,8 @@ import cors from "cors";
 import uploadRoutes from "./routes/uploadRoutes.js";
 const port = process.env.PORT || 5000;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 connectDB(); // Connect to MongoDB
 
