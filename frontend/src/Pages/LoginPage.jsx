@@ -1,18 +1,16 @@
-// src/pages/LoginPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Box,
   Typography,
   TextField,
   Button,
-  Paper,
-  Slide,
   Alert,
+  Stack,
 } from "@mui/material";
-import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { USERS_URL } from "../constants";
 
 const LoginPage = () => {
@@ -22,34 +20,19 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const user = localStorage.getItem("userInfo");
-    if (user) {
-      // Redirect to dashboard if user is logged in
-      navigate("/dashboard");
-    }
-  });
+    if (localStorage.getItem("userInfo")) navigate("/dashboard");
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMsg(null); // clear previous error
+    setErrorMsg(null);
 
     try {
-      const res = await axios.post(
-        `${USERS_URL}/login`,
-        { email, password },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true, // for cookies (if using them)
-        }
-      );
-
-      // Store user info locally if needed
-      localStorage.setItem("userInfo", JSON.stringify(res.data));
-
-      // Redirect to dashboard or home page
+      const { data } = await axios.post(`${USERS_URL}/login`, {
+        email,
+        password,
+      });
+      localStorage.setItem("userInfo", JSON.stringify(data));
       navigate("/dashboard");
     } catch (error) {
       setErrorMsg(
@@ -59,58 +42,76 @@ const LoginPage = () => {
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#eef2f6",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Navbar />
-      <Container maxWidth="sm" sx={{ mt: 5 }}>
-        <Slide direction="up" in={true} mountOnEnter unmountOnExit>
-          <Paper
-            elevation={3}
-            sx={{ p: 4, borderRadius: 3, backgroundColor: "#E3F2FD" }}
-          >
-            <Typography variant="h4" align="center" gutterBottom>
+      <Container
+        maxWidth="sm"
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          py: 10,
+        }}
+      >
+        <Typography
+          variant="h4"
+          align="center"
+          sx={{ mb: 4, fontWeight: "bold", color: "#162447" }}
+        >
+          Welcome Back!
+        </Typography>
+        {errorMsg && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errorMsg}
+          </Alert>
+        )}
+        <Box
+          component="form"
+          onSubmit={handleLogin}
+          sx={{
+            bgcolor: "#fff",
+            p: 4,
+            borderRadius: 3,
+            boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Stack spacing={2}>
+            <TextField
+              label="Email"
+              type="email"
+              required
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              label="Password"
+              type="password"
+              required
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              sx={{ mt: 2 }}
+            >
               Login
-            </Typography>
-
-            {errorMsg && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {errorMsg}
-              </Alert>
-            )}
-
-            <Box component="form" onSubmit={handleLogin}>
-              <TextField
-                label="Email"
-                variant="outlined"
-                fullWidth
-                required
-                type="email"
-                margin="normal"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <TextField
-                label="Password"
-                variant="outlined"
-                fullWidth
-                required
-                type="password"
-                margin="normal"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 2, py: 1.5, fontSize: "1rem" }}
-              >
-                Sign In
-              </Button>
-            </Box>
-          </Paper>
-        </Slide>
+            </Button>
+          </Stack>
+        </Box>
       </Container>
-    </>
+    </Box>
   );
 };
 

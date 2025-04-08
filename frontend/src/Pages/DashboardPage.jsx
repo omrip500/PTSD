@@ -1,19 +1,17 @@
-// src/pages/DashboardPage.jsx
+// DashboardPage.jsx (Complete Redesign)
 import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
   Container,
-  Paper,
-  Grid,
   Avatar,
-  Divider,
   Button,
-  Fade,
+  Divider,
+  IconButton,
 } from "@mui/material";
-import { deepPurple } from "@mui/material/colors";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { User, UploadCloud, History, FileDown } from "lucide-react";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -31,84 +29,140 @@ const DashboardPage = () => {
   if (!user) return null;
 
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ bgcolor: "#f4f6f8", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#eef2f6" }}>
+      {/* Sidebar */}
+      <Box
+        sx={{
+          width: 260,
+          bgcolor: "#162447",
+          color: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          py: 4,
+        }}
+      >
+        <Avatar sx={{ width: 100, height: 100, bgcolor: "#1f4068", mb: 2 }}>
+          <User size={50} />
+        </Avatar>
+        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+          {user.firstName} {user.lastName}
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.7 }}>
+          {user.email}
+        </Typography>
+
+        <Divider sx={{ bgcolor: "#394867", width: "80%", my: 3 }} />
+
+        <Button
+          variant="outlined"
+          sx={{ color: "#fff", borderColor: "#fff" }}
+          onClick={() => navigate("/profile")}
+        >
+          View Profile
+        </Button>
+      </Box>
+
+      {/* Main Content */}
+      <Box sx={{ flexGrow: 1 }}>
         <Navbar />
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Welcome back, {user.firstName}
+        <Container maxWidth="lg" sx={{ mt: 5 }}>
+          <Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
+            Dashboard
           </Typography>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-                <Box display="flex" flexDirection="column" alignItems="center">
-                  <Avatar
-                    sx={{ bgcolor: deepPurple[500], width: 80, height: 80 }}
-                  >
-                    {user.firstName[0]}
-                  </Avatar>
-                  <Typography variant="h6" sx={{ mt: 2 }}>
-                    {user.firstName} {user.lastName}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {user.email}
-                  </Typography>
-                  <Divider sx={{ my: 2, width: "100%" }} />
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    fullWidth
-                    onClick={() => navigate("/profile")}
-                  >
-                    View Profile
-                  </Button>
-                </Box>
-              </Paper>
-            </Grid>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+              gap: 4,
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 3,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                p: 3,
+                textAlign: "center",
+              }}
+            >
+              <IconButton
+                sx={{ bgcolor: "#1e81b0", color: "#fff", mb: 2 }}
+                size="large"
+              >
+                <UploadCloud size={32} />
+              </IconButton>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Upload New Dataset
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate("/UploadDataset")}
+              >
+                Start Uploading
+              </Button>
+            </Box>
 
-            <Grid item xs={12} md={8}>
-              <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Quick Actions
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      color="primary"
-                      onClick={() => navigate("/UploadDataset")}
-                    >
-                      Upload New Dataset
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      color="secondary"
-                      onClick={() => navigate("/history")}
-                    >
-                      View Past Results
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      onClick={() => alert("Export feature coming soon!")}
-                    >
-                      Export Analysis Results
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
-          </Grid>
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 3,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                p: 3,
+                textAlign: "center",
+              }}
+            >
+              <IconButton
+                sx={{ bgcolor: "#e94560", color: "#fff", mb: 2 }}
+                size="large"
+              >
+                <History size={32} />
+              </IconButton>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                View Past Results
+              </Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => navigate("/history")}
+              >
+                View Results
+              </Button>
+            </Box>
+
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 3,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                p: 3,
+                textAlign: "center",
+                gridColumn: { xs: "span 1", md: "span 2" },
+              }}
+            >
+              <IconButton
+                sx={{ bgcolor: "#0f3460", color: "#fff", mb: 2 }}
+                size="large"
+              >
+                <FileDown size={32} />
+              </IconButton>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Export Analysis Results
+              </Typography>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => alert("Export feature coming soon!")}
+              >
+                Export Now
+              </Button>
+            </Box>
+          </Box>
         </Container>
       </Box>
-    </Fade>
+    </Box>
   );
 };
 
