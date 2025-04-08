@@ -1,4 +1,3 @@
-// DashboardPage.jsx (Complete Redesign)
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -8,6 +7,9 @@ import {
   Button,
   Divider,
   IconButton,
+  useMediaQuery,
+  useTheme,
+  Stack,
 } from "@mui/material";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +18,8 @@ import { User, UploadCloud, History, FileDown } from "lucide-react";
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("userInfo"));
@@ -30,43 +34,84 @@ const DashboardPage = () => {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#eef2f6" }}>
-      {/* Sidebar */}
-      <Box
-        sx={{
-          width: 260,
-          bgcolor: "#162447",
-          color: "#fff",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          py: 4,
-        }}
-      >
-        <Avatar sx={{ width: 100, height: 100, bgcolor: "#1f4068", mb: 2 }}>
-          <User size={50} />
-        </Avatar>
-        <Typography variant="h6" sx={{ fontWeight: 500 }}>
-          {user.firstName} {user.lastName}
-        </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.7 }}>
-          {user.email}
-        </Typography>
-
-        <Divider sx={{ bgcolor: "#394867", width: "80%", my: 3 }} />
-
-        <Button
-          variant="outlined"
-          sx={{ color: "#fff", borderColor: "#fff" }}
-          onClick={() => navigate("/profile")}
+      {/* Sidebar – Only on Desktop */}
+      {!isMobile && (
+        <Box
+          sx={{
+            width: 260,
+            bgcolor: "#162447",
+            color: "#fff",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            py: 4,
+          }}
         >
-          View Profile
-        </Button>
-      </Box>
+          <Avatar sx={{ width: 100, height: 100, bgcolor: "#1f4068", mb: 2 }}>
+            <User size={50} />
+          </Avatar>
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>
+            {user.firstName} {user.lastName}
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+            {user.email}
+          </Typography>
+
+          <Divider sx={{ bgcolor: "#394867", width: "80%", my: 3 }} />
+
+          <Button
+            variant="outlined"
+            sx={{ color: "#fff", borderColor: "#fff" }}
+            onClick={() => navigate("/profile")}
+          >
+            View Profile
+          </Button>
+        </Box>
+      )}
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1 }}>
         <Navbar />
         <Container maxWidth="lg" sx={{ mt: 5 }}>
+          {/* Mobile: Show user summary at top */}
+          {isMobile && (
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 3,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                p: 3,
+                mb: 4,
+                textAlign: "center",
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: "#1f4068",
+                  mx: "auto",
+                  mb: 2,
+                }}
+              >
+                <User size={40} />
+              </Avatar>
+              <Typography variant="h6">
+                {user.firstName} {user.lastName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {user.email}
+              </Typography>
+              <Button
+                variant="outlined"
+                sx={{ mt: 2 }}
+                onClick={() => navigate("/profile")}
+              >
+                View Profile
+              </Button>
+            </Box>
+          )}
+
           <Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
             Dashboard
           </Typography>
