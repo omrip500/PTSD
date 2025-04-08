@@ -1,147 +1,156 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   AppBar,
   Toolbar,
   Typography,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
-  Box,
   Button,
+  Box,
+  IconButton,
+  Avatar,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+  const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
-  const userInfo = localStorage.getItem("userInfo");
-  const user = userInfo ? JSON.parse(userInfo) : null;
+  const navItems = [
+    { label: "Dashboard", path: "/dashboard" },
+    { label: "Upload", path: "/uploadDataset" },
+    { label: "Results", path: "/history" },
+    { label: "Profile", path: "/profile" },
+  ];
+
+  const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
     localStorage.removeItem("userInfo");
     navigate("/login");
   };
 
-  const toggleDrawer = (open) => () => {
-    setDrawerOpen(open);
-  };
-
-  const navItems = user
-    ? [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Upload Dataset", path: "/uploadDataset" },
-        { label: "View Results", path: "/history" },
-        { label: "My Profile", path: "/profile" },
-      ]
-    : [];
-
-  const isActive = (path) => location.pathname === path;
-
   return (
-    <>
-      <AppBar
-        position="static"
+    <AppBar
+      position="static"
+      elevation={0}
+      sx={{
+        backgroundColor: "#ffffff",
+        borderBottom: "1px solid #e0e0e0",
+        color: "#1e293b",
+        py: 1,
+      }}
+    >
+      <Toolbar
         sx={{
-          background: "linear-gradient(90deg, #0D47A1, #1976d2)",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+          maxWidth: "1300px",
+          mx: "auto",
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
         }}
       >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        {/* Logo and Title */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Avatar
+            src="/favicon.ico"
+            sx={{ width: 36, height: 36 }}
+            alt="logo"
+          />
           <Typography
             variant="h6"
             component={Link}
             to="/"
             sx={{
-              color: "#fff",
               textDecoration: "none",
               fontWeight: "bold",
-              fontSize: "1.25rem",
+              color: "#1e293b",
+              fontSize: "1.2rem",
             }}
           >
             PTSD Research Tool
           </Typography>
+        </Box>
 
-          {user ? (
-            <>
-              <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
-                {navItems.map((item) => (
-                  <Button
-                    key={item.label}
-                    component={Link}
-                    to={item.path}
-                    sx={{
-                      color: isActive(item.path) ? "#ffe082" : "#fff",
-                      fontWeight: isActive(item.path) ? "bold" : "normal",
-                      borderBottom: isActive(item.path)
-                        ? "2px solid #ffe082"
-                        : "none",
-                      borderRadius: 0,
-                    }}
-                  >
-                    {item.label}
-                  </Button>
-                ))}
-                <Button color="inherit" onClick={handleLogout}>
-                  Logout
-                </Button>
-              </Box>
-
-              {/* Icon menu for mobile */}
-              <Box sx={{ display: { xs: "flex", md: "none" } }}>
-                <IconButton
-                  color="inherit"
-                  edge="end"
-                  onClick={toggleDrawer(true)}
-                >
-                  <MenuIcon />
-                </IconButton>
-              </Box>
-            </>
-          ) : (
-            <Box>
-              <Button color="inherit" component={Link} to="/login">
-                Login
-              </Button>
-              <Button color="inherit" component={Link} to="/register">
-                Register
-              </Button>
-            </Box>
-          )}
-        </Toolbar>
-      </AppBar>
-
-      <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)}>
-        <Box
-          sx={{ width: 250 }}
-          role="presentation"
-          onClick={toggleDrawer(false)}
-        >
-          <List>
+        {/* Navigation - if user logged in */}
+        {userInfo ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {navItems.map((item) => (
-              <ListItem
-                button
+              <Button
                 key={item.label}
                 component={Link}
                 to={item.path}
                 sx={{
-                  bgcolor: isActive(item.path) ? "#e3f2fd" : "inherit",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  color: isActive(item.path) ? "#2563eb" : "#64748b",
+                  borderBottom: isActive(item.path)
+                    ? "2px solid #2563eb"
+                    : "2px solid transparent",
+                  borderRadius: 0,
+                  fontSize: "0.95rem",
+                  "&:hover": {
+                    backgroundColor: "#f1f5f9",
+                    color: "#2563eb",
+                  },
                 }}
               >
-                <ListItemText primary={item.label} />
-              </ListItem>
+                {item.label}
+              </Button>
             ))}
-            <ListItem button onClick={handleLogout}>
-              <ListItemText primary="Logout" />
-            </ListItem>
-          </List>
-        </Box>
-      </Drawer>
-    </>
+            <IconButton
+              onClick={handleLogout}
+              sx={{
+                color: "#64748b",
+                border: "1px solid #cbd5e1",
+                ml: 1,
+                "&:hover": {
+                  color: "#ef4444",
+                  borderColor: "#ef4444",
+                  backgroundColor: "#fef2f2",
+                },
+              }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              component={Link}
+              to="/login"
+              variant="text"
+              sx={{
+                textTransform: "none",
+                color: "#2563eb",
+                fontWeight: 500,
+                "&:hover": {
+                  backgroundColor: "#f1f5f9",
+                },
+              }}
+            >
+              Login
+            </Button>
+            <Button
+              component={Link}
+              to="/register"
+              variant="contained"
+              sx={{
+                textTransform: "none",
+                bgcolor: "#2563eb",
+                color: "#fff",
+                fontWeight: 500,
+                "&:hover": {
+                  bgcolor: "#1d4ed8",
+                },
+              }}
+            >
+              Register
+            </Button>
+          </Box>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 };
 
