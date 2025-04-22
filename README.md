@@ -8,7 +8,7 @@ A research project focusing on building a machine learning model to predict micr
 
 This project combines two main parts:
 
-- **Deep Learning Model** (SimpleCNN):
+- **Deep Learning Model** (CNN):
   - A trained Convolutional Neural Network (CNN) model for classifying individual microglia cells based on their activation status.
   - The model was trained on crops (cell images) extracted via YOLO-based segmentation.
   - Final validation accuracy: ~80.8%
