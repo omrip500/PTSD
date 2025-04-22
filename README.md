@@ -1,6 +1,6 @@
 # PTSD Research Tool
 
-A full-stack web platform combined with a CNN-based classification model for analyzing microglia cell images in PTSD research.
+A research project focusing on building a machine learning model to predict microglial cell activation in PTSD research, supported by a web application for image upload and analysis.
 
 ---
 
