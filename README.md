@@ -26,16 +26,16 @@ In future stages, the web backend will communicate with the trained model's REST
 
 ```bash
 .
-├── backend/              # Node.js + Express server (REST API integration planned)
+├── backend/              # Node.js + Express server (API endpoints)
+├── docs/                 # Project documentation (requirements, design, literature review)
 ├── frontend/             # React-based web application
-├── screenshots/          # Web app screenshots
+├── screenshots/          # Screenshots from the web app
 ├── best_model.pth        # Trained SimpleCNN model (PyTorch)
-├── model.ipynb           # Jupyter Notebook for training the CNN model
-├── Literature review + competitors.pdf  # Research background
-├── Project definition.pdf               # Project scope and objectives
-├── detailed design.pdf                  # Detailed technical design
-├── detailed requirements.pdf            # Requirements document
-├── package.json / package-lock.json     # Node.js backend setup
+├── model.ipynb           # Jupyter Notebook for model training
+├── README.md             # Project description and instructions
+├── .gitignore            # Git ignore rules
+├── package.json          # Backend dependencies and scripts
+├── package-lock.json     # Exact versions of installed Node.js packages
 ```
 
 ---
