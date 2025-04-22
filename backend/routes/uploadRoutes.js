@@ -10,12 +10,10 @@ router.post("/dataset", upload.array("images", 20), async (req, res) => {
 
     const { name, description, groupType, userId } = req.body;
 
-    // 🔒 בדיקה לשדות חובה
     if (!name || !groupType || !userId || imageUrls.length === 0) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // 🔍 בדיקה אם כבר קיים Dataset עם אותו שם לאותו משתמש
     const existing = await Dataset.findOne({ name, user: userId });
     if (existing) {
       return res.status(409).json({
@@ -23,7 +21,6 @@ router.post("/dataset", upload.array("images", 20), async (req, res) => {
       });
     }
 
-    // ✅ יצירת Dataset חדש
     const newDataset = new Dataset({
       name,
       description,
