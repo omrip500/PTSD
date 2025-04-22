@@ -18,8 +18,6 @@ This project combines two main parts:
   - View past uploaded datasets and results.
   - Export analysis results.
   
-In future stages, the web backend will communicate with the trained model's REST API to perform real-time predictions and return JSON results.
-
 ---
 
 ## 📂 Repository Structure
@@ -67,19 +65,6 @@ In future stages, the web backend will communicate with the trained model's REST
 
 ### Resulsts Anaylysis
 <img src="./screenshots/Screenshot 2025-04-22 at 9.29.43.png" width="700"/>
-
----
-
-## 📊 Model Performance
-- **Validation Accuracy**: ~80.82%
-- **Test Accuracy**: ~78.46%
-
----
-
-## 🚀 Future Work
-- Develop REST API to serve the model (Flask / FastAPI).
-- Integrate frontend-backend communication with model predictions.
-- Collect more labeled data to improve classification for minority classes.
 
 ---
 
