@@ -28,6 +28,7 @@ In future stages, the web backend will communicate with the trained model's REST
 .
 ├── backend/              # Node.js + Express server (REST API integration planned)
 ├── frontend/             # React-based web application
+├── screenshots/          # Web app screenshots
 ├── best_model.pth        # Trained SimpleCNN model (PyTorch)
 ├── model.ipynb           # Jupyter Notebook for training the CNN model
 ├── Literature review + competitors.pdf  # Research background
@@ -54,12 +55,24 @@ In future stages, the web backend will communicate with the trained model's REST
 
 ---
 
+## 🖼️ Web Application Screenshots
+
+> A glimpse into the web interface:
+
+### Dashboard Screen
+<img src="./screenshots/Screenshot 2025-04-22 at 9.28.46.png" width="700"/>
+
+### Upload New Dataset Screen
+<img src="./screenshots/Screenshot 2025-04-22 at 9.48.52.png" width="700"/>
+
+### Resulsts Anaylysis
+<img src="./screenshots/Screenshot 2025-04-22 at 9.29.43.png" width="700"/>
+
+---
+
 ## 📊 Model Performance
 - **Validation Accuracy**: ~80.82%
 - **Test Accuracy**: ~78.46%
-
-> **Note:**  
-> The "Resolution" class was underrepresented in the training data due to dataset limitations (only 4 images available).
 
 ---
 
