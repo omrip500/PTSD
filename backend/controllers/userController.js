@@ -62,9 +62,14 @@ const loginUser = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/:id
 // @access  Private
 export const updateUserProfile = async (req, res) => {
+  console.log("Update user profile called");
   try {
     const { firstName, lastName, email } = req.body;
+    console.log(firstName, lastName, email);
+
     const user = await User.findById(req.params.id);
+    console.log("user found", user);
+
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.firstName = firstName || user.firstName;

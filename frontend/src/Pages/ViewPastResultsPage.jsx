@@ -8,9 +8,10 @@ import {
   Button,
   Divider,
   CircularProgress,
+  Stack,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import Navbar from "../components/Navbar";
-import Chart from "../components/DummyChart"; // ניצור אותו בהמשך
 import { USERS_URL } from "../constants";
 
 const ViewPastResultsPage = () => {
@@ -39,7 +40,6 @@ const ViewPastResultsPage = () => {
     }
   }, [user._id]);
 
-  // the route api/datasets is not existing yet in the backend.
   const handleDelete = async (datasetId) => {
     try {
       await fetch(`http://localhost:8000/api/datasets/${datasetId}`, {
@@ -72,9 +72,6 @@ const ViewPastResultsPage = () => {
                   <Typography color="text.secondary">
                     {dataset.description}
                   </Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    Group: <b>{dataset.groupType}</b>
-                  </Typography>
                 </Grid>
                 <Grid item xs={12} sm={4} textAlign="right">
                   <Button
@@ -89,36 +86,91 @@ const ViewPastResultsPage = () => {
 
               <Divider sx={{ my: 3 }} />
 
-              <Typography variant="subtitle1" gutterBottom>
-                Images:
-              </Typography>
-              <Grid container spacing={1}>
-                {dataset.images.map((url, idx) => (
-                  <Grid item key={idx}>
+              {dataset.modelOutput?.original && (
+                <>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Original Image:
+                  </Typography>
+                  <a
+                    href={dataset.modelOutput.original}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <img
-                      src={url}
-                      alt={`dataset-img-${idx}`}
-                      width={100}
-                      height={100}
-                      style={{ borderRadius: 8 }}
+                      src={dataset.modelOutput.original}
+                      alt="original"
+                      style={{
+                        width: "100%",
+                        maxHeight: 300,
+                        objectFit: "contain",
+                        marginBottom: "0.5rem",
+                        cursor: "zoom-in",
+                      }}
                     />
-                  </Grid>
-                ))}
-              </Grid>
+                  </a>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href={dataset.modelOutput.original}
+                    download
+                    startIcon={<DownloadIcon />}
+                    sx={{ mb: 2 }}
+                  >
+                    Download Original
+                  </Button>
+                </>
+              )}
 
-              <Divider sx={{ my: 3 }} />
+              {dataset.modelOutput?.annotated && (
+                <>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Predicted (Annotated):
+                  </Typography>
+                  <a
+                    href={dataset.modelOutput.annotated}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={dataset.modelOutput.annotated}
+                      alt="annotated"
+                      style={{
+                        width: "100%",
+                        maxHeight: 300,
+                        objectFit: "contain",
+                        marginBottom: "0.5rem",
+                        cursor: "zoom-in",
+                      }}
+                    />
+                  </a>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href={dataset.modelOutput.annotated}
+                    download
+                    startIcon={<DownloadIcon />}
+                    sx={{ mb: 2 }}
+                  >
+                    Download Annotated
+                  </Button>
+                </>
+              )}
 
-              <Typography variant="subtitle1" gutterBottom>
-                Dummy Model Output:
-              </Typography>
-              <Typography color="text.secondary">
-                • PTSD probability: 76% <br />• Signs of trauma observed in 3
-                images.
-              </Typography>
-
-              <Box sx={{ mt: 2 }}>
-                <Chart /> {/* גרף דמה */}
-              </Box>
+              {dataset.modelOutput?.summary && (
+                <>
+                  <Divider sx={{ my: 3 }} />
+                  <Typography variant="subtitle1" gutterBottom>
+                    Prediction Summary:
+                  </Typography>
+                  <Typography color="text.secondary">
+                    • Resting: {dataset.modelOutput.summary.Resting}
+                    <br />• Surveilling:{" "}
+                    {dataset.modelOutput.summary.Surveilling}
+                    <br />• Activated: {dataset.modelOutput.summary.Activated}
+                    <br />• Resolution: {dataset.modelOutput.summary.Resolution}
+                  </Typography>
+                </>
+              )}
             </Paper>
           ))
         )}

@@ -37,6 +37,7 @@ const MyProfilePage = () => {
 
     try {
       const user = JSON.parse(localStorage.getItem("userInfo"));
+
       const { data } = await axios.put(`${USERS_URL}/${user._id}`, formData);
       localStorage.setItem("userInfo", JSON.stringify(data));
       toast.success("Profile updated successfully!");

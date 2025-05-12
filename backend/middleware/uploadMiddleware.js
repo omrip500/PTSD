@@ -14,7 +14,15 @@ const upload = multer({
     },
     key: (req, file, cb) => {
       const ext = path.extname(file.originalname);
-      cb(null, `datasets/${uuidv4()}${ext}`);
+      const folder =
+        file.fieldname === "image"
+          ? "uploads/images"
+          : file.fieldname === "yolo"
+          ? "uploads/yolo"
+          : "uploads/other";
+
+      const filename = `${uuidv4()}${ext}`;
+      cb(null, `${folder}/${filename}`);
     },
   }),
 });

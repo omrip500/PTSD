@@ -5,16 +5,17 @@ const datasetSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: String,
-    groupType: {
-      type: String,
-      enum: ["control", "experiment"],
-      required: true,
-    },
-    images: [String], // URLs from S3
+    images: [String], // פלטים מסומנים
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // ✅ חובה
+      required: true,
+    },
+    modelOutput: {
+      original: String, // 📌 קובץ התמונה המקורי (S3)
+      yoloFile: String, // 📌 קובץ YOLO המקורי (S3)
+      annotated: String, // 📌 תוצאה מסומנת (S3)
+      summary: Object, // תוצאות החיזוי
     },
   },
   { timestamps: true }

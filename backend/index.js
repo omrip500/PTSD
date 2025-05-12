@@ -9,7 +9,9 @@ import userRoutes from "./routes/userRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import cors from "cors";
 import uploadRoutes from "./routes/uploadRoutes.js";
-const port = process.env.PORT || 5000;
+import analyzeRoutes from "./routes/anaylzeRoute.js";
+
+const port = process.env.PORT || 8000;
 
 const __dirname = path.resolve(); // set __dirname to the current directory
 
@@ -29,6 +31,7 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/analyze", analyzeRoutes);
 
 if (process.env.NODE_ENV === "production") {
   // Set the frontend build folder as static, setting it static means that we can load the files inside the folder directly without having to create a route for it. Otherwise, we would have to create a route for it and then load the file in the route.

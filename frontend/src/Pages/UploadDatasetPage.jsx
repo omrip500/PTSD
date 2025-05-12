@@ -1,82 +1,43 @@
-// UploadDatasetPage.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
   Container,
   Fade,
   Grid,
-  MenuItem,
   Paper,
   TextField,
   Typography,
-  IconButton,
-  Stack,
   CircularProgress,
+  Stack,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import { useDropzone } from "react-dropzone";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DeleteIcon from "@mui/icons-material/Delete";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UPLOAD_URL } from "../constants";
 
-const DropZoneStyle = styled(Box)(({ theme }) => ({
-  border: "2px dashed #ccc",
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(3),
-  textAlign: "center",
-  cursor: "pointer",
-  height: 150,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#666",
-  backgroundColor: "#fafafa",
-  transition: "background-color 0.2s ease-in-out",
-  "&:hover": {
-    backgroundColor: "#f0f0f0",
-  },
-}));
-
-const PreviewImage = styled("img")(({ theme }) => ({
-  width: 100,
-  height: 100,
-  objectFit: "cover",
-  borderRadius: theme.shape.borderRadius,
-  margin: theme.spacing(1),
-}));
+const FileInput = styled("input")({
+  display: "none",
+});
 
 const UploadDatasetPage = () => {
   const [datasetName, setDatasetName] = useState("");
   const [description, setDescription] = useState("");
-  const [groupType, setGroupType] = useState("");
-  const [images, setImages] = useState([]);
+  const [image, setImage] = useState(null);
+  const [yolo, setYolo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const onDrop = useCallback((acceptedFiles) => {
-    setImages((prev) => [...prev, ...acceptedFiles]);
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { "image/*": [] },
-  });
-
-  const handleRemoveImage = (index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!datasetName || !groupType || images.length === 0) {
-      toast.error("Please fill all fields and upload at least one image.");
+    if (!datasetName || !image || !yolo) {
+      toast.error(
+        "Please fill all fields and upload both image and YOLO file."
+      );
       return;
     }
 
@@ -89,11 +50,9 @@ const UploadDatasetPage = () => {
     const formData = new FormData();
     formData.append("name", datasetName);
     formData.append("description", description);
-    formData.append("groupType", groupType);
     formData.append("userId", user._id);
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
+    formData.append("image", image);
+    formData.append("yolo", yolo);
 
     try {
       setLoading(true);
@@ -109,13 +68,11 @@ const UploadDatasetPage = () => {
         throw new Error(data.message || "Upload failed");
       }
 
-      toast.success("Dataset uploaded successfully!");
-
-      // Reset form
+      toast.success("Dataset uploaded and analyzed successfully!");
       setDatasetName("");
       setDescription("");
-      setGroupType("");
-      setImages([]);
+      setImage(null);
+      setYolo(null);
       navigate("/dashboard");
     } catch (err) {
       console.error("❌ Upload error:", err);
@@ -148,20 +105,6 @@ const UploadDatasetPage = () => {
 
                 <Grid item>
                   <TextField
-                    label="Group Type"
-                    select
-                    fullWidth
-                    required
-                    value={groupType}
-                    onChange={(e) => setGroupType(e.target.value)}
-                  >
-                    <MenuItem value="control">Control</MenuItem>
-                    <MenuItem value="experiment">Experiment</MenuItem>
-                  </TextField>
-                </Grid>
-
-                <Grid item>
-                  <TextField
                     label="Description"
                     fullWidth
                     multiline
@@ -172,65 +115,63 @@ const UploadDatasetPage = () => {
                 </Grid>
 
                 <Grid item>
-                  <DropZoneStyle {...getRootProps()}>
-                    <input {...getInputProps()} />
-                    <CloudUploadIcon sx={{ fontSize: 40, mb: 1 }} />
-                    <Typography>
-                      {isDragActive
-                        ? "Drop the images here..."
-                        : "Drag and drop images here, or click to select files"}
-                    </Typography>
-                  </DropZoneStyle>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Upload Image:
+                  </Typography>
+                  <label htmlFor="image-upload">
+                    <FileInput
+                      accept="image/*"
+                      id="image-upload"
+                      type="file"
+                      onChange={(e) => setImage(e.target.files[0])}
+                    />
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={<CloudUploadIcon />}
+                    >
+                      {image ? image.name : "Choose Image"}
+                    </Button>
+                  </label>
                 </Grid>
 
-                {images.length > 0 && (
-                  <Grid item>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Preview:
-                    </Typography>
-                    <Stack direction="row" flexWrap="wrap">
-                      {images.map((file, index) => (
-                        <Box key={index} sx={{ position: "relative" }}>
-                          <PreviewImage
-                            src={URL.createObjectURL(file)}
-                            alt="preview"
-                          />
-                          <IconButton
-                            size="small"
-                            onClick={() => handleRemoveImage(index)}
-                            sx={{
-                              position: "absolute",
-                              top: 0,
-                              right: 0,
-                              backgroundColor: "rgba(255,255,255,0.8)",
-                              "&:hover": {
-                                backgroundColor: "#fff",
-                              },
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </Grid>
-                )}
+                <Grid item>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Upload YOLO (.txt) File:
+                  </Typography>
+                  <label htmlFor="yolo-upload">
+                    <FileInput
+                      accept=".txt"
+                      id="yolo-upload"
+                      type="file"
+                      onChange={(e) => setYolo(e.target.files[0])}
+                    />
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={<CloudUploadIcon />}
+                    >
+                      {yolo ? yolo.name : "Choose YOLO File"}
+                    </Button>
+                  </label>
+                </Grid>
 
                 <Grid item>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    sx={{ fontWeight: "bold", py: 1.5 }}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <CircularProgress size={24} color="inherit" />
-                    ) : (
-                      "Submit Dataset"
-                    )}
-                  </Button>
+                  <Stack direction="row" justifyContent="center">
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      sx={{ fontWeight: "bold", px: 4, py: 1.5 }}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <CircularProgress size={24} color="inherit" />
+                      ) : (
+                        "Submit Dataset"
+                      )}
+                    </Button>
+                  </Stack>
                 </Grid>
               </Grid>
             </Box>
