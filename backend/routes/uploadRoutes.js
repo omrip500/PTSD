@@ -38,7 +38,14 @@ router.post(
       formData.append("image", fsSync.createReadStream(imageFile.path));
       formData.append("yolo", fsSync.createReadStream(yoloFile.path));
 
-      const flaskUrl = process.env.FLASK_URL || "http://localhost:6000/analyze";
+      // const flaskUrl = "https://ptsd-model-api.onrender.com/analyze";
+      // const flaskUrl = "http://127.0.0.1:6000/analyze";
+
+      // if we are in production, use the production URL, otherwise use localhost
+      const flaskUrl =
+        process.env.NODE_ENV === "production"
+          ? "https://ptsd-model-api.onrender.com/analyze"
+          : "http://127.0.0.1:6000/analyze";
 
       const flaskRes = await axios.post(flaskUrl, formData, {
         headers: formData.getHeaders(),

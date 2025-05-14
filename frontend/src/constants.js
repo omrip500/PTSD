@@ -3,3 +3,4 @@ export const BASE_URL =
 
 export const USERS_URL = `${BASE_URL}/api/users`;
 export const UPLOAD_URL = `${BASE_URL}/api/upload`;
+export const DATASET_URL = `${BASE_URL}/api/datasets`;

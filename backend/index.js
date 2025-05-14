@@ -10,7 +10,7 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import cors from "cors";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import analyzeRoutes from "./routes/anaylzeRoute.js";
-
+import datasetRoutes from "./routes/datasetRoutes.js";
 const port = process.env.PORT || 8000;
 
 const __dirname = path.resolve(); // set __dirname to the current directory
@@ -31,6 +31,7 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/datasets", datasetRoutes);
 app.use("/api/analyze", analyzeRoutes);
 
 if (process.env.NODE_ENV === "production") {

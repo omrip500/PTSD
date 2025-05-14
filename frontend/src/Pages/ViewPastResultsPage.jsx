@@ -8,15 +8,16 @@ import {
   Button,
   Divider,
   CircularProgress,
-  Stack,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import Navbar from "../components/Navbar";
 import { USERS_URL } from "../constants";
+import { DATASET_URL } from "../constants";
 
 const ViewPastResultsPage = () => {
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("userInfo"));
 
@@ -25,8 +26,6 @@ const ViewPastResultsPage = () => {
       try {
         const response = await fetch(`${USERS_URL}/datasets/${user._id}`);
         const data = await response.json();
-        console.log("Fetched datasets:", data);
-
         setDatasets(data);
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
@@ -42,12 +41,21 @@ const ViewPastResultsPage = () => {
 
   const handleDelete = async (datasetId) => {
     try {
-      await fetch(`http://localhost:8000/api/datasets/${datasetId}`, {
+      setDeletingId(datasetId);
+      const response = await fetch(`${DATASET_URL}/${datasetId}`, {
         method: "DELETE",
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete dataset");
+      }
+
       setDatasets((prev) => prev.filter((ds) => ds._id !== datasetId));
     } catch (err) {
       console.error("Delete failed:", err);
+      alert("An error occurred while deleting the dataset.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -78,8 +86,9 @@ const ViewPastResultsPage = () => {
                     variant="outlined"
                     color="error"
                     onClick={() => handleDelete(dataset._id)}
+                    disabled={deletingId === dataset._id}
                   >
-                    Delete
+                    {deletingId === dataset._id ? "Deleting..." : "Delete"}
                   </Button>
                 </Grid>
               </Grid>
