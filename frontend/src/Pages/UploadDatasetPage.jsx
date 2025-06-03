@@ -1,27 +1,11 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Fade,
-  Grid,
-  Paper,
-  TextField,
-  Typography,
-  CircularProgress,
-  Stack,
-} from "@mui/material";
-import { styled } from "@mui/system";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { motion } from "framer-motion";
+import { Upload, FileText, ArrowLeft, Loader2 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import MultiFileUpload from "../components/MultiFileUpload";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UPLOAD_URL } from "../constants";
-
-const FileInput = styled("input")({
-  display: "none",
-});
 
 const UploadDatasetPage = () => {
   const [datasetName, setDatasetName] = useState("");
@@ -103,71 +87,137 @@ const UploadDatasetPage = () => {
   };
 
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ minHeight: "100vh", bgcolor: "#f4f6f8" }}>
-        <Navbar />
-        <Container maxWidth="sm" sx={{ py: 5 }}>
-          <Paper elevation={6} sx={{ p: 5, borderRadius: 4 }}>
-            <Typography variant="h4" align="center" gutterBottom>
-              Upload New Dataset
-            </Typography>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-2xl"
+        >
+          {/* Header */}
+          <div className="text-center mb-8">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
+            >
+              <Upload size={32} className="text-white" />
+            </motion.div>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 4 }}>
-              <Grid container direction="column" spacing={3}>
-                <Grid item>
-                  <TextField
-                    label="Dataset Name"
-                    fullWidth
+            <motion.h1
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-4xl font-bold text-slate-800 mb-2"
+            >
+              Upload New Dataset
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="text-slate-600"
+            >
+              Upload microscopic images and YOLO files for AI analysis
+            </motion.p>
+          </div>
+
+          {/* Back Button */}
+          <motion.button
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            onClick={() => navigate("/dashboard")}
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 mb-6 transition-colors duration-200"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </motion.button>
+
+          {/* Form */}
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            onSubmit={handleSubmit}
+            className="bg-white p-8 rounded-2xl shadow-xl border border-white/20"
+          >
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Dataset Name *
+                </label>
+                <div className="relative">
+                  <FileText
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                    size={20}
+                  />
+                  <input
+                    type="text"
                     required
                     value={datasetName}
                     onChange={(e) => setDatasetName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="Enter dataset name"
                   />
-                </Grid>
+                </div>
+              </div>
 
-                <Grid item>
-                  <TextField
-                    label="Description"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </Grid>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
+                  placeholder="Enter dataset description (optional)"
+                />
+              </div>
 
-                <Grid item>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Upload Images and YOLO Files:
-                  </Typography>
-                  <MultiFileUpload
-                    fileAssociations={fileAssociations}
-                    setFileAssociations={setFileAssociations}
-                  />
-                </Grid>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-4">
+                  Upload Images and YOLO Files
+                </label>
+                <MultiFileUpload
+                  fileAssociations={fileAssociations}
+                  setFileAssociations={setFileAssociations}
+                />
+              </div>
 
-                <Grid item>
-                  <Stack direction="row" justifyContent="center">
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      sx={{ fontWeight: "bold", px: 4, py: 1.5 }}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <CircularProgress size={24} color="inherit" />
-                      ) : (
-                        "Submit Dataset"
-                      )}
-                    </Button>
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Box>
-          </Paper>
-        </Container>
-      </Box>
-    </Fade>
+              <motion.button
+                whileHover={{ scale: loading ? 1 : 1.02 }}
+                whileTap={{ scale: loading ? 1 : 0.98 }}
+                type="submit"
+                disabled={loading}
+                className={`w-full font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                  loading
+                    ? "bg-slate-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={20} />
+                    Submit Dataset
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.form>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 

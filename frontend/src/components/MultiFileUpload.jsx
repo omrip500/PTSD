@@ -1,73 +1,73 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Box,
-  Button,
-  Paper,
-  Typography,
-  Grid,
-  IconButton,
-  Chip,
-  Alert,
-  Divider,
-  Card,
-  CardContent,
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
-import {
-  CloudUpload as CloudUploadIcon,
-  Delete as DeleteIcon,
-  Image as ImageIcon,
-  Description as DescriptionIcon,
-  Link as LinkIcon,
-  CheckCircle as CheckIcon,
-  Cancel as CancelIcon,
-} from "@mui/icons-material";
-import { styled } from "@mui/system";
+  CloudUpload,
+  Trash2,
+  Image,
+  FileText,
+  Link,
+  Check,
+  X,
+  AlertCircle,
+} from "lucide-react";
 
-const FileInput = styled("input")({
-  display: "none",
-});
+// File chip component for drag and drop
+const DraggableFileChip = ({
+  file,
+  type,
+  onDelete,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  isDragging,
+  isDropTarget,
+}) => {
+  const Icon = type === "image" ? Image : FileText;
+  const bgColor =
+    type === "image"
+      ? "from-blue-500 to-cyan-500"
+      : "from-orange-500 to-red-500";
 
-const DropZone = styled(Paper)(({ theme, isDragOver }) => ({
-  border: `2px dashed ${isDragOver ? "#1976d2" : "#ccc"}`,
-  borderRadius: 8,
-  padding: 24,
-  textAlign: "center",
-  cursor: "pointer",
-  transition: "all 0.3s ease",
-  backgroundColor: isDragOver ? "#f5f5f5" : "transparent",
-  "&:hover": {
-    borderColor: "#1976d2",
-    backgroundColor: "#f9f9f9",
-  },
-}));
-
-const AssociationCard = styled(Card)(({ theme }) => ({
-  marginBottom: 16,
-  border: "1px solid #e0e0e0",
-  "&:hover": {
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-  },
-}));
-
-const DraggableFileChip = styled(Chip)(({ isDragging, isDropTarget }) => ({
-  cursor: "grab",
-  transition: "all 0.3s ease",
-  transform: isDragging ? "scale(1.05)" : "scale(1)",
-  opacity: isDragging ? 0.8 : 1,
-  border: isDropTarget ? "2px dashed #1976d2" : "1px solid #e0e0e0",
-  backgroundColor: isDropTarget ? "#e3f2fd" : "transparent",
-  "&:active": {
-    cursor: "grabbing",
-  },
-  "&:hover": {
-    backgroundColor: isDropTarget ? "#bbdefb" : "#f5f5f5",
-  },
-}));
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: isDragging ? 1.05 : 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      className={`
+        inline-flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all duration-200 cursor-grab active:cursor-grabbing mb-2 mr-2
+        ${isDragging ? "opacity-80 shadow-lg" : "opacity-100"}
+        ${
+          isDropTarget
+            ? "border-blue-500 bg-blue-50 border-dashed"
+            : "border-slate-300 bg-white hover:bg-slate-50"
+        }
+      `}
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      <div
+        className={`w-6 h-6 rounded-full bg-gradient-to-r ${bgColor} flex items-center justify-center`}
+      >
+        <Icon size={14} className="text-white" />
+      </div>
+      <span className="text-sm font-medium text-slate-700 max-w-32 truncate">
+        {file.name}
+      </span>
+      <button
+        onClick={onDelete}
+        className="text-slate-400 hover:text-red-500 transition-colors duration-200"
+      >
+        <X size={16} />
+      </button>
+    </motion.div>
+  );
+};
 
 const MultiFileUpload = ({ fileAssociations, setFileAssociations }) => {
   const [dragOver, setDragOver] = useState(false);
@@ -78,7 +78,6 @@ const MultiFileUpload = ({ fileAssociations, setFileAssociations }) => {
   const [draggedFile, setDraggedFile] = useState(null);
   const [draggedFileType, setDraggedFileType] = useState(null);
   const [dropTargetFile, setDropTargetFile] = useState(null);
-  const [dropTargetType, setDropTargetType] = useState(null);
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -139,7 +138,6 @@ const MultiFileUpload = ({ fileAssociations, setFileAssociations }) => {
     setDraggedFile(null);
     setDraggedFileType(null);
     setDropTargetFile(null);
-    setDropTargetType(null);
   };
 
   const handleFileDragOver = (e, file, fileType) => {
@@ -147,13 +145,11 @@ const MultiFileUpload = ({ fileAssociations, setFileAssociations }) => {
     // Only allow drop if dragging different file types
     if (draggedFileType && draggedFileType !== fileType) {
       setDropTargetFile(file);
-      setDropTargetType(fileType);
     }
   };
 
   const handleFileDragLeave = () => {
     setDropTargetFile(null);
-    setDropTargetType(null);
   };
 
   const handleFileDrop = (e, targetFile, targetType) => {
@@ -236,229 +232,295 @@ const MultiFileUpload = ({ fileAssociations, setFileAssociations }) => {
   };
 
   return (
-    <Box>
+    <div className="space-y-6">
       {/* Upload Area */}
-      <DropZone
-        isDragOver={dragOver}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`
+          border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300
+          ${
+            dragOver
+              ? "border-blue-500 bg-blue-50"
+              : "border-slate-300 hover:border-blue-400 hover:bg-slate-50"
+          }
+        `}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        elevation={0}
       >
-        <CloudUploadIcon sx={{ fontSize: 48, color: "#666", mb: 2 }} />
-        <Typography variant="h6" gutterBottom>
+        <CloudUpload
+          size={48}
+          className={`mx-auto mb-4 ${
+            dragOver ? "text-blue-500" : "text-slate-400"
+          }`}
+        />
+        <h3 className="text-xl font-semibold text-slate-800 mb-2">
           Drag & Drop Files Here
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Or click to browse files
-        </Typography>
+        </h3>
+        <p className="text-slate-600 mb-6">Or click to browse files</p>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <label htmlFor="image-upload-multiple">
-            <FileInput
+            <input
               accept="image/*"
               id="image-upload-multiple"
               type="file"
               multiple
               onChange={(e) => handleImageUpload(e.target.files)}
+              className="hidden"
             />
-            <Button
-              variant="outlined"
-              component="span"
-              startIcon={<ImageIcon />}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer"
             >
+              <Image size={20} />
               Upload Images
-            </Button>
+            </motion.div>
           </label>
 
           <label htmlFor="yolo-upload-multiple">
-            <FileInput
+            <input
               accept=".txt"
               id="yolo-upload-multiple"
               type="file"
               multiple
               onChange={(e) => handleYoloUpload(e.target.files)}
+              className="hidden"
             />
-            <Button
-              variant="outlined"
-              component="span"
-              startIcon={<DescriptionIcon />}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-2 border-2 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer"
             >
+              <FileText size={20} />
               Upload YOLO Files
-            </Button>
+            </motion.div>
           </label>
-        </Stack>
-      </DropZone>
+        </div>
+      </motion.div>
 
       {/* File Associations */}
-      {fileAssociations.length > 0 && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            File Associations ({fileAssociations.length})
-          </Typography>
-          {fileAssociations.map((association) => (
-            <AssociationCard key={association.id}>
-              <CardContent>
-                <Grid container alignItems="center" spacing={2}>
-                  <Grid item xs={5}>
-                    <Box display="flex" alignItems="center">
-                      <ImageIcon sx={{ mr: 1, color: "#1976d2" }} />
-                      <Typography variant="body2" noWrap>
+      <AnimatePresence>
+        {fileAssociations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
+            <h3 className="text-lg font-semibold text-slate-800">
+              File Associations ({fileAssociations.length})
+            </h3>
+            <div className="space-y-3">
+              {fileAssociations.map((association) => (
+                <motion.div
+                  key={association.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                    <div className="md:col-span-2 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                        <Image size={16} className="text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-slate-700 truncate">
                         {association.image.name}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={1} textAlign="center">
-                    <LinkIcon color="action" />
-                  </Grid>
-                  <Grid item xs={5}>
-                    <Box display="flex" alignItems="center">
-                      <DescriptionIcon sx={{ mr: 1, color: "#ff9800" }} />
-                      <Typography variant="body2" noWrap>
+                      </span>
+                    </div>
+
+                    <div className="flex justify-center">
+                      <Link size={20} className="text-slate-400" />
+                    </div>
+
+                    <div className="md:col-span-2 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                        <FileText size={16} className="text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-slate-700 truncate">
                         {association.yolo.name}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={1}>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => removeAssociation(association.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </AssociationCard>
-          ))}
-        </Box>
-      )}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => removeAssociation(association.id)}
+                        className="text-slate-400 hover:text-red-500 transition-colors duration-200 p-1"
+                      >
+                        <Trash2 size={18} />
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Unassociated Files */}
-      {(uploadedImages.length > 0 || uploadedYolos.length > 0) && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Unassociated Files
-          </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Drag an image onto a YOLO file (or vice versa) to create an
-            association
-          </Alert>
+      <AnimatePresence>
+        {(uploadedImages.length > 0 || uploadedYolos.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
+            <h3 className="text-lg font-semibold text-slate-800">
+              Unassociated Files
+            </h3>
 
-          {uploadedImages.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Images (drag to YOLO files to associate):
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {uploadedImages.map((image, index) => (
-                  <DraggableFileChip
-                    key={index}
-                    label={image.name}
-                    icon={<ImageIcon />}
-                    onDelete={() => removeUnassociatedFile(image, "image")}
-                    draggable
-                    onDragStart={() => handleFileDragStart(image, "image")}
-                    onDragEnd={handleFileDragEnd}
-                    onDragOver={(e) => handleFileDragOver(e, image, "image")}
-                    onDragLeave={handleFileDragLeave}
-                    onDrop={(e) => handleFileDrop(e, image, "image")}
-                    isDragging={draggedFile === image}
-                    isDropTarget={dropTargetFile === image}
-                    sx={{ mb: 1 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          )}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+              <AlertCircle size={20} className="text-blue-600" />
+              <p className="text-blue-800 text-sm">
+                Drag an image onto a YOLO file (or vice versa) to create an
+                association
+              </p>
+            </div>
 
-          {uploadedYolos.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                YOLO Files (drag to images to associate):
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {uploadedYolos.map((yolo, index) => (
-                  <DraggableFileChip
-                    key={index}
-                    label={yolo.name}
-                    icon={<DescriptionIcon />}
-                    onDelete={() => removeUnassociatedFile(yolo, "yolo")}
-                    draggable
-                    onDragStart={() => handleFileDragStart(yolo, "yolo")}
-                    onDragEnd={handleFileDragEnd}
-                    onDragOver={(e) => handleFileDragOver(e, yolo, "yolo")}
-                    onDragLeave={handleFileDragLeave}
-                    onDrop={(e) => handleFileDrop(e, yolo, "yolo")}
-                    isDragging={draggedFile === yolo}
-                    isDropTarget={dropTargetFile === yolo}
-                    sx={{ mb: 1 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
-          )}
-        </Box>
-      )}
+            {uploadedImages.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-md font-medium text-slate-700">
+                  Images (drag to YOLO files to associate):
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {uploadedImages.map((image, index) => (
+                    <DraggableFileChip
+                      key={index}
+                      file={image}
+                      type="image"
+                      onDelete={() => removeUnassociatedFile(image, "image")}
+                      onDragStart={() => handleFileDragStart(image, "image")}
+                      onDragEnd={handleFileDragEnd}
+                      onDragOver={(e) => handleFileDragOver(e, image, "image")}
+                      onDragLeave={handleFileDragLeave}
+                      onDrop={(e) => handleFileDrop(e, image, "image")}
+                      isDragging={draggedFile === image}
+                      isDropTarget={dropTargetFile === image}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {uploadedYolos.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-md font-medium text-slate-700">
+                  YOLO Files (drag to images to associate):
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {uploadedYolos.map((yolo, index) => (
+                    <DraggableFileChip
+                      key={index}
+                      file={yolo}
+                      type="yolo"
+                      onDelete={() => removeUnassociatedFile(yolo, "yolo")}
+                      onDragStart={() => handleFileDragStart(yolo, "yolo")}
+                      onDragEnd={handleFileDragEnd}
+                      onDragOver={(e) => handleFileDragOver(e, yolo, "yolo")}
+                      onDragLeave={handleFileDragLeave}
+                      onDrop={(e) => handleFileDrop(e, yolo, "yolo")}
+                      isDragging={draggedFile === yolo}
+                      isDropTarget={dropTargetFile === yolo}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog.open} onClose={cancelAssociation}>
-        <DialogTitle>Confirm File Association</DialogTitle>
-        <DialogContent>
-          <Box sx={{ py: 2 }}>
-            <Typography variant="body1" gutterBottom>
-              Do you want to associate these files?
-            </Typography>
+      <AnimatePresence>
+        {confirmDialog.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={cancelAssociation}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl"
+            >
+              <h3 className="text-xl font-semibold text-slate-800 mb-4">
+                Confirm File Association
+              </h3>
 
-            <Box sx={{ mt: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={5}>
-                  <Box display="flex" alignItems="center">
-                    <ImageIcon sx={{ mr: 1, color: "#1976d2" }} />
-                    <Typography variant="body2" noWrap>
+              <p className="text-slate-600 mb-6">
+                Do you want to associate these files?
+              </p>
+
+              <div className="bg-slate-50 rounded-xl p-4 mb-6">
+                <div className="grid grid-cols-5 gap-4 items-center">
+                  <div className="col-span-2 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                      <Image size={12} className="text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700 truncate">
                       {confirmDialog.sourceType === "image"
                         ? confirmDialog.sourceFile?.name
                         : confirmDialog.targetFile?.name}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={2} textAlign="center">
-                  <LinkIcon color="action" />
-                </Grid>
-                <Grid item xs={5}>
-                  <Box display="flex" alignItems="center">
-                    <DescriptionIcon sx={{ mr: 1, color: "#ff9800" }} />
-                    <Typography variant="body2" noWrap>
+                    </span>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <Link size={16} className="text-slate-400" />
+                  </div>
+
+                  <div className="col-span-2 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                      <FileText size={12} className="text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700 truncate">
                       {confirmDialog.sourceType === "yolo"
                         ? confirmDialog.sourceFile?.name
                         : confirmDialog.targetFile?.name}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={cancelAssociation}
-            startIcon={<CancelIcon />}
-            color="error"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={confirmAssociation}
-            startIcon={<CheckIcon />}
-            variant="contained"
-            color="primary"
-          >
-            Confirm Association
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={cancelAssociation}
+                  className="flex-1 inline-flex items-center justify-center gap-2 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl font-medium transition-all duration-200"
+                >
+                  <X size={16} />
+                  Cancel
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={confirmAssociation}
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-all duration-200"
+                >
+                  <Check size={16} />
+                  Confirm
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

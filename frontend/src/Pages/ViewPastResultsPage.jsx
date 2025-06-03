@@ -1,46 +1,36 @@
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Grid,
-  Button,
-  Divider,
-  CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  Stack,
-  IconButton,
-  TextField,
-} from "@mui/material";
-import {
-  Download as DownloadIcon,
-  ExpandMore as ExpandMoreIcon,
-  TableChart as ExcelIcon,
+  Download,
+  ChevronDown,
+  FileSpreadsheet,
   Image as ImageIcon,
-  Description as DescriptionIcon,
-  Archive as ArchiveIcon,
-  Edit as EditIcon,
-  Check as CheckIcon,
-  Close as CloseIcon,
-} from "@mui/icons-material";
+  FileText,
+  Archive,
+  Edit3,
+  Check,
+  X,
+  Trash2,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 import Navbar from "../components/Navbar";
 import { USERS_URL, BASE_URL, DATASET_URL } from "../constants";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const ViewPastResultsPage = () => {
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
-  const [editingDataset, setEditingDataset] = useState(null); // datasetId being edited
+  const [editingDataset, setEditingDataset] = useState(null);
   const [editDatasetValues, setEditDatasetValues] = useState({
     name: "",
     description: "",
   });
+  const [expandedDatasets, setExpandedDatasets] = useState(new Set());
 
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("userInfo"));
 
   useEffect(() => {
@@ -51,6 +41,7 @@ const ViewPastResultsPage = () => {
         setDatasets(data);
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
+        toast.error("Failed to load datasets");
       } finally {
         setLoading(false);
       }
@@ -148,6 +139,14 @@ const ViewPastResultsPage = () => {
   };
 
   const handleDelete = async (datasetId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this dataset? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
     try {
       setDeletingId(datasetId);
       const response = await fetch(`${DATASET_URL}/${datasetId}`, {
@@ -159,15 +158,15 @@ const ViewPastResultsPage = () => {
       }
 
       setDatasets((prev) => prev.filter((ds) => ds._id !== datasetId));
+      toast.success("Dataset deleted successfully!");
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("An error occurred while deleting the dataset.");
+      toast.error("Failed to delete dataset");
     } finally {
       setDeletingId(null);
     }
   };
 
-  // Dataset edit functions
   const handleStartDatasetEdit = (
     datasetId,
     currentName,
@@ -187,8 +186,6 @@ const ViewPastResultsPage = () => {
 
   const handleSaveDatasetEdit = async () => {
     try {
-      console.log("Saving dataset:", { editingDataset, editDatasetValues });
-
       const response = await fetch(`${DATASET_URL}/${editingDataset}`, {
         method: "PUT",
         headers: {
@@ -200,15 +197,10 @@ const ViewPastResultsPage = () => {
         }),
       });
 
-      console.log("Response status:", response.status);
-      const responseData = await response.json();
-      console.log("Response data:", responseData);
-
       if (!response.ok) {
         throw new Error("Failed to update dataset");
       }
 
-      // Update local state
       setDatasets((prev) =>
         prev.map((dataset) => {
           if (dataset._id === editingDataset) {
@@ -230,577 +222,490 @@ const ViewPastResultsPage = () => {
     }
   };
 
-  return (
-    <>
-      <style>
-        {`
-          .results-grid .MuiGrid-item {
-            margin-bottom: 24px !important;
-            display: flex !important;
-          }
+  const toggleDatasetExpansion = (datasetId) => {
+    setExpandedDatasets((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(datasetId)) {
+        newSet.delete(datasetId);
+      } else {
+        newSet.add(datasetId);
+      }
+      return newSet;
+    });
+  };
 
-          .results-grid .MuiPaper-root {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-          }
-
-          .results-grid .MuiGrid-container {
-            align-items: stretch;
-          }
-        `}
-      </style>
-      <Box sx={{ bgcolor: "#f4f6f8", minHeight: "100vh" }}>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
         <Navbar />
-        <Container maxWidth="xl" sx={{ py: 6, px: { xs: 2, sm: 3, md: 4 } }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={3}
-          >
-            <Typography variant="h4">My Uploaded Datasets</Typography>
-            {datasets.length > 0 && (
-              <Button
-                variant="contained"
-                startIcon={<ExcelIcon />}
-                onClick={handleExportAllDatasets}
-                sx={{ bgcolor: "#0f3460" }}
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <Loader2
+              size={48}
+              className="animate-spin text-blue-600 mx-auto mb-4"
+            />
+            <p className="text-slate-600">Loading your datasets...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+      <Navbar />
+      <div className="flex-grow px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div>
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                onClick={() => navigate("/dashboard")}
+                className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 mb-4 transition-colors duration-200"
               >
+                <ArrowLeft size={20} />
+                <span>Back to Dashboard</span>
+              </motion.button>
+
+              <motion.h1
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-4xl font-bold text-slate-800"
+              >
+                My Research Results
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-slate-600 mt-2"
+              >
+                View and manage your analyzed datasets
+              </motion.p>
+            </div>
+
+            {datasets.length > 0 && (
+              <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExportAllDatasets}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200"
+              >
+                <FileSpreadsheet size={20} />
                 Export All to Excel
-              </Button>
+              </motion.button>
             )}
-          </Box>
+          </div>
 
-          {loading ? (
-            <CircularProgress />
-          ) : datasets.length === 0 ? (
-            <Typography>No datasets found.</Typography>
-          ) : (
-            datasets.map((dataset) => (
-              <Paper key={dataset._id} elevation={4} sx={{ p: 4, mb: 4 }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={8}>
-                    {editingDataset === dataset._id ? (
-                      <Box>
-                        <TextField
-                          fullWidth
-                          value={editDatasetValues.name}
-                          onChange={(e) =>
-                            setEditDatasetValues((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                          variant="outlined"
-                          size="small"
-                          sx={{ mb: 1 }}
-                          placeholder="Dataset name"
-                        />
-                        <TextField
-                          fullWidth
-                          value={editDatasetValues.description}
-                          onChange={(e) =>
-                            setEditDatasetValues((prev) => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                          variant="outlined"
-                          size="small"
-                          placeholder="Dataset description"
-                        />
-                      </Box>
-                    ) : (
-                      <Box>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="h6">{dataset.name}</Typography>
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleStartDatasetEdit(
-                                dataset._id,
-                                dataset.name,
-                                dataset.description
-                              )
-                            }
-                            sx={{ color: "#0f3460" }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                        <Typography color="text.secondary">
-                          {dataset.description}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Grid>
-                  <Grid item xs={12} sm={4} textAlign="right">
-                    {editingDataset === dataset._id ? (
-                      <Box display="flex" justifyContent="flex-end" gap={1}>
-                        <IconButton
-                          onClick={handleSaveDatasetEdit}
-                          sx={{ color: "green" }}
-                        >
-                          <CheckIcon />
-                        </IconButton>
-                        <IconButton
-                          onClick={handleCancelDatasetEdit}
-                          sx={{ color: "red" }}
-                        >
-                          <CloseIcon />
-                        </IconButton>
-                      </Box>
-                    ) : (
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleDelete(dataset._id)}
-                        disabled={deletingId === dataset._id}
-                      >
-                        {deletingId === dataset._id ? "Deleting..." : "Delete"}
-                      </Button>
-                    )}
-                  </Grid>
-                </Grid>
+          {/* Content */}
+          <AnimatePresence>
+            {datasets.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="text-center py-16"
+              >
+                <div className="w-24 h-24 bg-gradient-to-r from-slate-300 to-slate-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <FileText size={32} className="text-white" />
+                </div>
+                <h3 className="text-2xl font-semibold text-slate-800 mb-2">
+                  No Datasets Found
+                </h3>
+                <p className="text-slate-600 mb-8">
+                  You haven't uploaded any datasets yet. Start by uploading your
+                  first dataset.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate("/uploadDataset")}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200"
+                >
+                  Upload Dataset
+                </motion.button>
+              </motion.div>
+            ) : (
+              <div className="space-y-6">
+                {datasets.map((dataset, index) => (
+                  <DatasetCard
+                    key={dataset._id}
+                    dataset={dataset}
+                    index={index}
+                    editingDataset={editingDataset}
+                    editDatasetValues={editDatasetValues}
+                    setEditDatasetValues={setEditDatasetValues}
+                    deletingId={deletingId}
+                    expandedDatasets={expandedDatasets}
+                    handleStartDatasetEdit={handleStartDatasetEdit}
+                    handleSaveDatasetEdit={handleSaveDatasetEdit}
+                    handleCancelDatasetEdit={handleCancelDatasetEdit}
+                    handleDelete={handleDelete}
+                    toggleDatasetExpansion={toggleDatasetExpansion}
+                    handleExportSingleDataset={handleExportSingleDataset}
+                    handleDownloadZip={handleDownloadZip}
+                  />
+                ))}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-                <Divider sx={{ my: 3 }} />
+// Dataset Card Component
+const DatasetCard = ({
+  dataset,
+  index,
+  editingDataset,
+  editDatasetValues,
+  setEditDatasetValues,
+  deletingId,
+  expandedDatasets,
+  handleStartDatasetEdit,
+  handleSaveDatasetEdit,
+  handleCancelDatasetEdit,
+  handleDelete,
+  toggleDatasetExpansion,
+  handleExportSingleDataset,
+  handleDownloadZip,
+}) => {
+  const isExpanded = expandedDatasets.has(dataset._id);
 
-                {dataset.modelOutput?.original && (
-                  <>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Original Image:
-                    </Typography>
-                    <a
-                      href={dataset.modelOutput.original}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src={dataset.modelOutput.original}
-                        alt="original"
-                        style={{
-                          width: "100%",
-                          maxHeight: 300,
-                          objectFit: "contain",
-                          marginBottom: "0.5rem",
-                          cursor: "zoom-in",
-                        }}
-                      />
-                    </a>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      href={dataset.modelOutput.original}
-                      download
-                      startIcon={<DownloadIcon />}
-                      sx={{ mb: 2 }}
-                    >
-                      Download Original
-                    </Button>
-                  </>
-                )}
-
-                {dataset.modelOutput?.annotated && (
-                  <>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Predicted (Annotated):
-                    </Typography>
-                    <a
-                      href={dataset.modelOutput.annotated}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src={dataset.modelOutput.annotated}
-                        alt="annotated"
-                        style={{
-                          width: "100%",
-                          maxHeight: 300,
-                          objectFit: "contain",
-                          marginBottom: "0.5rem",
-                          cursor: "zoom-in",
-                        }}
-                      />
-                    </a>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      href={dataset.modelOutput.annotated}
-                      download
-                      startIcon={<DownloadIcon />}
-                      sx={{ mb: 2 }}
-                    >
-                      Download Annotated
-                    </Button>
-                  </>
-                )}
-
-                {/* Export Buttons */}
-                <Divider sx={{ my: 3 }} />
-                <Box display="flex" justifyContent="center" gap={2} mb={2}>
-                  <Button
-                    variant="contained"
-                    startIcon={<ExcelIcon />}
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="bg-white rounded-2xl shadow-lg border border-white/20 overflow-hidden"
+    >
+      {/* Dataset Header */}
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div className="flex-1">
+            {editingDataset === dataset._id ? (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={editDatasetValues.name}
+                  onChange={(e) =>
+                    setEditDatasetValues((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-semibold text-lg"
+                  placeholder="Dataset name"
+                />
+                <textarea
+                  value={editDatasetValues.description}
+                  onChange={(e) =>
+                    setEditDatasetValues((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
+                  rows={2}
+                  placeholder="Dataset description"
+                />
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-xl font-semibold text-slate-800">
+                    {dataset.name}
+                  </h3>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() =>
-                      handleExportSingleDataset(dataset._id, dataset.name)
+                      handleStartDatasetEdit(
+                        dataset._id,
+                        dataset.name,
+                        dataset.description
+                      )
                     }
-                    sx={{ bgcolor: "#0f3460" }}
+                    className="text-slate-400 hover:text-blue-600 transition-colors duration-200"
                   >
-                    Export Results to Excel
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<ArchiveIcon />}
-                    onClick={() => handleDownloadZip(dataset)}
-                    sx={{ borderColor: "#0f3460", color: "#0f3460" }}
+                    <Edit3 size={16} />
+                  </motion.button>
+                </div>
+                <p className="text-slate-600">
+                  {dataset.description || "No description provided"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {editingDataset === dataset._id ? (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleSaveDatasetEdit}
+                  className="text-green-600 hover:text-green-700 transition-colors duration-200 p-2"
+                >
+                  <Check size={20} />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleCancelDatasetEdit}
+                  className="text-red-600 hover:text-red-700 transition-colors duration-200 p-2"
+                >
+                  <X size={20} />
+                </motion.button>
+              </>
+            ) : (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => toggleDatasetExpansion(dataset._id)}
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                >
+                  <span>{isExpanded ? "Hide Details" : "View Details"}</span>
+                  <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    Download Images ZIP
-                  </Button>
-                </Box>
+                    <ChevronDown size={20} />
+                  </motion.div>
+                </motion.button>
 
-                {/* Results Section */}
-                <Divider sx={{ my: 2 }} />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleDelete(dataset._id)}
+                  disabled={deletingId === dataset._id}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                    deletingId === dataset._id
+                      ? "bg-slate-400 text-white cursor-not-allowed"
+                      : "border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
+                  }`}
+                >
+                  {deletingId === dataset._id ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      Delete
+                    </>
+                  )}
+                </motion.button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
-                {/* Check if it's multiple files or single file */}
-                {dataset.modelOutput?.results &&
-                dataset.modelOutput.results.length > 0 ? (
-                  // Multiple files dataset
-                  <>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Analysis Results ({dataset.modelOutput.results.length}{" "}
-                      files)
-                    </Typography>
+      {/* Expanded Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="border-t border-slate-200"
+          >
+            <div className="p-6 space-y-6">
+              {/* Export Buttons */}
+              <div className="flex flex-wrap gap-3 justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() =>
+                    handleExportSingleDataset(dataset._id, dataset.name)
+                  }
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200"
+                >
+                  <FileSpreadsheet size={20} />
+                  Export to Excel
+                </motion.button>
 
-                    {/* Total Summary */}
-                    {dataset.modelOutput.totalSummary && (
-                      <Paper
-                        elevation={1}
-                        sx={{ p: 2, mb: 2, bgcolor: "#f8f9fa" }}
-                      >
-                        <Typography variant="subtitle2" gutterBottom>
-                          Total Summary:
-                        </Typography>
-                        <Stack direction="row" spacing={2} flexWrap="wrap">
-                          {Object.entries(dataset.modelOutput.totalSummary).map(
-                            ([key, value]) => (
-                              <Chip
-                                key={key}
-                                label={`${key}: ${value}`}
-                                color="primary"
-                                variant="outlined"
-                              />
-                            )
-                          )}
-                        </Stack>
-                      </Paper>
-                    )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleDownloadZip(dataset)}
+                  className="inline-flex items-center gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200"
+                >
+                  <Archive size={20} />
+                  Download ZIP
+                </motion.button>
+              </div>
 
-                    {/* Individual Results */}
-                    <Accordion defaultExpanded>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Box>
-                          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            View File Results (
-                            {dataset.modelOutput.results.length} files)
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "#666", mt: 0.5 }}
-                          >
-                            Results are displayed in a responsive grid layout
-                          </Typography>
-                        </Box>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Grid
-                          container
-                          spacing={2}
-                          className="results-grid"
-                          sx={{
-                            "& .MuiGrid-item": {
-                              marginBottom: "24px !important",
-                            },
-                          }}
+              {/* Images */}
+              {(dataset.modelOutput?.original ||
+                dataset.modelOutput?.annotated) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {dataset.modelOutput?.original && (
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <ImageIcon size={20} />
+                        Original Image
+                      </h4>
+                      <div className="bg-slate-50 rounded-xl p-4">
+                        <a
+                          href={dataset.modelOutput.original}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
                         >
-                          {dataset.modelOutput.results.map((result, index) => (
-                            <Grid
-                              item
-                              xs={12}
-                              sm={6}
-                              md={4}
-                              lg={3}
-                              xl={2}
-                              key={index}
-                              sx={{
-                                display: "flex",
-                                marginBottom: 2,
-                              }}
-                            >
-                              <Paper
-                                elevation={3}
-                                sx={{
-                                  p: 1.5,
-                                  height: "100%",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  borderRadius: 2,
-                                  transition: "all 0.3s ease-in-out",
-                                  "&:hover": {
-                                    elevation: 6,
-                                    transform: "translateY(-2px)",
-                                    boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
-                                  },
-                                }}
-                              >
-                                <Typography
-                                  variant="subtitle1"
-                                  sx={{
-                                    color: "#0f3460",
-                                    fontWeight: "bold",
-                                    borderBottom: "1px solid #e0e0e0",
-                                    pb: 0.5,
-                                    mb: 1,
-                                    fontSize: "1rem",
-                                  }}
-                                >
-                                  File {index + 1}
-                                </Typography>
+                          <img
+                            src={dataset.modelOutput.original}
+                            alt="Original"
+                            className="w-full h-64 object-contain rounded-lg cursor-zoom-in hover:shadow-lg transition-shadow duration-200"
+                          />
+                        </a>
+                        <motion.a
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          href={dataset.modelOutput.original}
+                          download
+                          className="inline-flex items-center gap-2 mt-3 text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                        >
+                          <Download size={16} />
+                          Download Original
+                        </motion.a>
+                      </div>
+                    </div>
+                  )}
 
-                                {/* File Names */}
-                                <Box sx={{ mb: 1 }}>
-                                  <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    mb={0.5}
+                  {dataset.modelOutput?.annotated && (
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                        <ImageIcon size={20} />
+                        Predicted (Annotated)
+                      </h4>
+                      <div className="bg-slate-50 rounded-xl p-4">
+                        <a
+                          href={dataset.modelOutput.annotated}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={dataset.modelOutput.annotated}
+                            alt="Annotated"
+                            className="w-full h-64 object-contain rounded-lg cursor-zoom-in hover:shadow-lg transition-shadow duration-200"
+                          />
+                        </a>
+                        <motion.a
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          href={dataset.modelOutput.annotated}
+                          download
+                          className="inline-flex items-center gap-2 mt-3 text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                        >
+                          <Download size={16} />
+                          Download Annotated
+                        </motion.a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Results Summary */}
+              {dataset.modelOutput?.totalSummary && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
+                  <h4 className="text-lg font-semibold text-slate-800 mb-4">
+                    Analysis Summary
+                  </h4>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.entries(dataset.modelOutput.totalSummary).map(
+                      ([key, value]) => (
+                        <div
+                          key={key}
+                          className="bg-white px-4 py-2 rounded-xl border border-blue-200 shadow-sm"
+                        >
+                          <span className="text-sm font-medium text-slate-600">
+                            {key}:
+                          </span>
+                          <span className="ml-2 text-lg font-bold text-blue-600">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Individual Results */}
+              {dataset.modelOutput?.results &&
+                dataset.modelOutput.results.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-slate-800">
+                      Individual Results ({dataset.modelOutput.results.length}{" "}
+                      files)
+                    </h4>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {dataset.modelOutput.results.map((result, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className="bg-slate-50 rounded-xl p-4"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="font-medium text-slate-800 truncate">
+                              {result.filename || `Result ${index + 1}`}
+                            </h5>
+                            {result.confidence && (
+                              <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-lg">
+                                {(result.confidence * 100).toFixed(1)}%
+                                confidence
+                              </span>
+                            )}
+                          </div>
+
+                          {result.detections && (
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(result.detections).map(
+                                ([detection, count]) => (
+                                  <div
+                                    key={detection}
+                                    className="bg-white px-3 py-1 rounded-lg border border-slate-200 text-sm"
                                   >
-                                    <ImageIcon
-                                      sx={{
-                                        mr: 0.5,
-                                        fontSize: 14,
-                                        color: "#0f3460",
-                                      }}
-                                    />
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        fontSize: "0.7rem",
-                                        color: "#666",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                      }}
-                                      title={result.imageName || "N/A"}
-                                    >
-                                      {result.imageName || "N/A"}
-                                    </Typography>
-                                  </Box>
-                                  <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    mb={0.5}
-                                  >
-                                    <DescriptionIcon
-                                      sx={{
-                                        mr: 0.5,
-                                        fontSize: 14,
-                                        color: "#0f3460",
-                                      }}
-                                    />
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        fontSize: "0.7rem",
-                                        color: "#666",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                      }}
-                                      title={result.yoloName || "N/A"}
-                                    >
-                                      {result.yoloName || "N/A"}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-
-                                {/* Images Stacked */}
-                                <Box sx={{ mb: 1 }}>
-                                  {/* Original Image */}
-                                  {result.original && (
-                                    <Box sx={{ mb: 1 }}>
-                                      <Typography
-                                        variant="caption"
-                                        display="block"
-                                        sx={{
-                                          fontWeight: "bold",
-                                          fontSize: "0.7rem",
-                                          mb: 0.5,
-                                        }}
-                                      >
-                                        Original:
-                                      </Typography>
-                                      <a
-                                        href={result.original}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        <img
-                                          src={result.original}
-                                          alt={`original-${index}`}
-                                          style={{
-                                            width: "100%",
-                                            height: 120,
-                                            objectFit: "cover",
-                                            cursor: "zoom-in",
-                                            border: "1px solid #e0e0e0",
-                                            borderRadius: "8px",
-                                            transition:
-                                              "transform 0.2s ease-in-out",
-                                          }}
-                                          onMouseEnter={(e) => {
-                                            e.target.style.transform =
-                                              "scale(1.02)";
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            e.target.style.transform =
-                                              "scale(1)";
-                                          }}
-                                        />
-                                      </a>
-                                    </Box>
-                                  )}
-
-                                  {/* Annotated Image */}
-                                  {result.annotated && (
-                                    <Box sx={{ mb: 1 }}>
-                                      <Typography
-                                        variant="caption"
-                                        display="block"
-                                        sx={{
-                                          fontWeight: "bold",
-                                          fontSize: "0.7rem",
-                                          mb: 0.5,
-                                        }}
-                                      >
-                                        Predicted:
-                                      </Typography>
-                                      <a
-                                        href={result.annotated}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        <img
-                                          src={result.annotated}
-                                          alt={`annotated-${index}`}
-                                          style={{
-                                            width: "100%",
-                                            height: 120,
-                                            objectFit: "cover",
-                                            cursor: "zoom-in",
-                                            border: "1px solid #e0e0e0",
-                                            borderRadius: "8px",
-                                            transition:
-                                              "transform 0.2s ease-in-out",
-                                          }}
-                                          onMouseEnter={(e) => {
-                                            e.target.style.transform =
-                                              "scale(1.02)";
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            e.target.style.transform =
-                                              "scale(1)";
-                                          }}
-                                        />
-                                      </a>
-                                    </Box>
-                                  )}
-                                </Box>
-
-                                {/* Results Summary */}
-                                {result.summary && (
-                                  <Box sx={{ mt: "auto", pt: 1 }}>
-                                    <Typography
-                                      variant="caption"
-                                      display="block"
-                                      sx={{
-                                        fontWeight: "bold",
-                                        color: "#0f3460",
-                                        borderTop: "1px solid #e0e0e0",
-                                        pt: 0.5,
-                                        mb: 0.5,
-                                        fontSize: "0.7rem",
-                                      }}
-                                    >
-                                      Results:
-                                    </Typography>
-                                    <Stack
-                                      direction="row"
-                                      spacing={0.5}
-                                      flexWrap="wrap"
-                                      sx={{ gap: 0.5 }}
-                                    >
-                                      {Object.entries(result.summary).map(
-                                        ([key, value]) => (
-                                          <Chip
-                                            key={key}
-                                            label={`${key}: ${value}`}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                              fontSize: "0.7rem",
-                                              height: 24,
-                                              borderColor: "#0f3460",
-                                              color: "#0f3460",
-                                              "&:hover": {
-                                                backgroundColor: "#0f3460",
-                                                color: "white",
-                                              },
-                                            }}
-                                          />
-                                        )
-                                      )}
-                                    </Stack>
-                                  </Box>
-                                )}
-                              </Paper>
-                            </Grid>
-                          ))}
-                        </Grid>
-                      </AccordionDetails>
-                    </Accordion>
-                  </>
-                ) : dataset.modelOutput?.summary ? (
-                  // Single file dataset (backward compatibility)
-                  <>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Analysis Results:
-                    </Typography>
-                    <Paper elevation={1} sx={{ p: 2, bgcolor: "#f8f9fa" }}>
-                      <Stack direction="row" spacing={2} flexWrap="wrap">
-                        {Object.entries(dataset.modelOutput.summary).map(
-                          ([key, value]) => (
-                            <Chip
-                              key={key}
-                              label={`${key}: ${value}`}
-                              color="primary"
-                              variant="outlined"
-                            />
-                          )
-                        )}
-                      </Stack>
-                    </Paper>
-                  </>
-                ) : (
-                  <Typography color="text.secondary">
-                    No analysis results available
-                  </Typography>
+                                    <span className="text-slate-600">
+                                      {detection}:
+                                    </span>
+                                    <span className="ml-1 font-semibold text-slate-800">
+                                      {count}
+                                    </span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </Paper>
-            ))
-          )}
-        </Container>
-      </Box>
-    </>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

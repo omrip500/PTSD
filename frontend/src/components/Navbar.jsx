@@ -1,38 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  IconButton,
-  Avatar,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import LogoutIcon from "@mui/icons-material/Logout";
+  Brain,
+  BarChart3,
+  Upload,
+  History,
+  User,
+  Sparkles,
+  Menu,
+  X,
+  LogOut,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   const navItems = [
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Upload", path: "/uploadDataset" },
-    { label: "Results", path: "/history" },
-    { label: "Profile", path: "/profile" },
+    {
+      label: "Dashboard",
+      path: "/dashboard",
+      icon: <BarChart3 size={16} />,
+    },
+    {
+      label: "Upload",
+      path: "/uploadDataset",
+      icon: <Upload size={16} />,
+    },
+    {
+      label: "Results",
+      path: "/history",
+      icon: <History size={16} />,
+    },
+    {
+      label: "Profile",
+      path: "/profile",
+      icon: <User size={16} />,
+    },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -44,201 +63,195 @@ const Navbar = () => {
 
   return (
     <>
-      <AppBar
-        position="static"
-        elevation={0}
-        sx={{
-          backgroundColor: "#ffffff",
-          borderBottom: "1px solid #e0e0e0",
-          color: "#1e293b",
-        }}
-      >
-        <Toolbar
-          sx={{
-            maxWidth: "1300px",
-            mx: "auto",
-            width: "100%",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {/* Logo + Title */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Avatar src="/favicon.ico" sx={{ width: 36, height: 36 }} />
-            <Typography
-              variant="h6"
-              component={Link}
-              to="/"
-              sx={{
-                textDecoration: "none",
-                fontWeight: "bold",
-                color: "#1e293b",
-                fontSize: "1.2rem",
-              }}
+      <nav className="bg-white/95 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo + Title */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center gap-3"
             >
-              PTSD Research Tool
-            </Typography>
-          </Box>
-
-          {/* Desktop View - Logged In */}
-          {!isMobile && userInfo && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              {navItems.map((item) => (
-                <Button
-                  key={item.label}
-                  component={Link}
-                  to={item.path}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 500,
-                    color: isActive(item.path) ? "#2563eb" : "#64748b",
-                    borderBottom: isActive(item.path)
-                      ? "2px solid #2563eb"
-                      : "2px solid transparent",
-                    borderRadius: 0,
-                    fontSize: "0.95rem",
-                    "&:hover": {
-                      backgroundColor: "#f1f5f9",
-                      color: "#2563eb",
-                    },
-                  }}
-                >
-                  {item.label}
-                </Button>
-              ))}
-              <IconButton
-                onClick={handleLogout}
-                sx={{
-                  color: "#64748b",
-                  border: "1px solid #cbd5e1",
-                  "&:hover": {
-                    color: "#ef4444",
-                    borderColor: "#ef4444",
-                    backgroundColor: "#fef2f2",
-                  },
-                }}
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-2">
+                <Brain size={32} className="text-white" />
+              </div>
+              <Link
+                to="/"
+                className="text-slate-800 font-bold text-xl no-underline hover:text-blue-600 transition-colors duration-200"
               >
-                <LogoutIcon />
-              </IconButton>
-            </Box>
-          )}
+                PTSD Research
+              </Link>
+              <div className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                <Sparkles size={12} />
+                <span>AI</span>
+              </div>
+            </motion.div>
 
-          {/* Desktop View - Not Logged In */}
-          {!isMobile && !userInfo && (
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button
-                component={Link}
-                to="/login"
-                variant="text"
-                sx={{
-                  textTransform: "none",
-                  color: "#2563eb",
-                  fontWeight: 500,
-                  "&:hover": {
-                    backgroundColor: "#f1f5f9",
-                  },
-                }}
+            {/* Desktop View - Logged In */}
+            {!isMobile && userInfo && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="flex items-center gap-2"
               >
-                Login
-              </Button>
-              <Button
-                component={Link}
-                to="/register"
-                variant="contained"
-                sx={{
-                  textTransform: "none",
-                  bgcolor: "#2563eb",
-                  color: "#fff",
-                  fontWeight: 500,
-                  "&:hover": {
-                    bgcolor: "#1d4ed8",
-                  },
-                }}
-              >
-                Register
-              </Button>
-            </Box>
-          )}
-
-          {/* Mobile View - Hamburger Icon */}
-          {isMobile && (
-            <IconButton
-              edge="end"
-              color="inherit"
-              onClick={() => setDrawerOpen(true)}
-              sx={{
-                ml: "auto",
-                mr: { xs: 1, sm: 2 },
-              }}
-            >
-              <MenuIcon fontSize="large" />
-            </IconButton>
-          )}
-        </Toolbar>
-      </AppBar>
-
-      {/* Mobile Drawer */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      >
-        <Box sx={{ width: 250, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-            Navigation
-          </Typography>
-          <List>
-            {userInfo ? (
-              <>
-                {navItems.map((item) => (
-                  <ListItem key={item.label} disablePadding>
-                    <ListItemButton
-                      component={Link}
+                {navItems.map((item, index) => (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * index }}
+                  >
+                    <Link
                       to={item.path}
-                      onClick={() => setDrawerOpen(false)}
+                      className={`
+                        inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200
+                        ${
+                          isActive(item.path)
+                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                            : "text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                        }
+                      `}
                     >
-                      <ListItemText primary={item.label} />
-                    </ListItemButton>
-                  </ListItem>
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </motion.div>
                 ))}
-                <Divider sx={{ my: 1 }} />
-                <ListItem disablePadding>
-                  <ListItemButton
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <button
+                    onClick={handleLogout}
+                    className="ml-2 p-2 text-slate-500 border border-slate-300 hover:text-red-500 hover:border-red-300 hover:bg-red-50 rounded-xl transition-all duration-200"
+                  >
+                    <LogOut size={20} />
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* Desktop View - Not Logged In */}
+            {!isMobile && !userInfo && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="flex gap-3"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link
+                    to="/login"
+                    className="px-6 py-2 font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                  >
+                    Login
+                  </Link>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link
+                    to="/register"
+                    className="px-6 py-2 font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg transition-all duration-200"
+                  >
+                    Get Started
+                  </Link>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* Mobile View - Hamburger Icon */}
+            {isMobile && (
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="p-2 text-slate-600 hover:text-blue-600 transition-colors duration-200"
+              >
+                <Menu size={24} />
+              </button>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="fixed right-0 top-0 h-full w-64 bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-bold text-slate-800">Navigation</h3>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 text-slate-500 hover:text-slate-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4">
+              {userInfo ? (
+                <div className="space-y-2">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      to={item.path}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200
+                        ${
+                          isActive(item.path)
+                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                            : "text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                        }
+                      `}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  ))}
+                  <div className="border-t border-slate-200 my-4" />
+                  <button
                     onClick={() => {
-                      setDrawerOpen(false);
+                      setMobileMenuOpen(false);
                       handleLogout();
                     }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-600 hover:bg-red-50 w-full transition-all duration-200"
                   >
-                    <ListItemText primary="Logout" />
-                  </ListItemButton>
-                </ListItem>
-              </>
-            ) : (
-              <>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    component={Link}
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Link
                     to="/login"
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
                   >
-                    <ListItemText primary="Login" />
-                  </ListItemButton>
-                </ListItem>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    component={Link}
+                    Login
+                  </Link>
+                  <Link
                     to="/register"
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center transition-all duration-200"
                   >
-                    <ListItemText primary="Register" />
-                  </ListItemButton>
-                </ListItem>
-              </>
-            )}
-          </List>
-        </Box>
-      </Drawer>
+                    Get Started
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
