@@ -19,13 +19,19 @@ const MyProfilePage = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
   });
+  const [userEmail, setUserEmail] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("userInfo"));
-    if (user) setFormData(user);
+    if (user) {
+      setFormData({
+        firstName: user.firstName,
+        lastName: user.lastName,
+      });
+      setUserEmail(user.email);
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -39,7 +45,9 @@ const MyProfilePage = () => {
       const user = JSON.parse(localStorage.getItem("userInfo"));
 
       const { data } = await axios.put(`${USERS_URL}/${user._id}`, formData);
-      localStorage.setItem("userInfo", JSON.stringify(data));
+      // Keep the email from the original user data since it's not editable
+      const updatedUserData = { ...data, email: user.email };
+      localStorage.setItem("userInfo", JSON.stringify(updatedUserData));
       toast.success("Profile updated successfully!");
       navigate("/dashboard");
     } catch (error) {
@@ -92,10 +100,14 @@ const MyProfilePage = () => {
               <TextField
                 label="Email"
                 name="email"
-                required
                 fullWidth
-                value={formData.email}
-                onChange={handleChange}
+                value={userEmail}
+                disabled
+                sx={{
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: "#666",
+                  },
+                }}
               />
               <Button
                 type="submit"

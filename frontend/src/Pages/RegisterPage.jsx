@@ -42,8 +42,10 @@ const RegisterPage = () => {
     }
 
     try {
-      await axios.post(`${USERS_URL}/register`, formData);
-      navigate("/login");
+      const { data } = await axios.post(`${USERS_URL}/register`, formData);
+      // Auto-login the user after successful registration
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      navigate("/dashboard");
     } catch (error) {
       setErrorMsg(error.response?.data?.message || "Registration failed.");
     }
