@@ -25,6 +25,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (user) {
+    // Return user data for automatic login
     res.status(201).json({
       _id: user._id,
       firstName: user.firstName,
@@ -45,7 +46,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email });
 
-  if (user && (await bcrypt.compare(password, user.password))) {
+  if (!user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  if (await bcrypt.compare(password, user.password)) {
     res.json({
       _id: user._id,
       firstName: user.firstName,
@@ -54,7 +60,7 @@ const loginUser = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(401);
-    throw new Error("Invalid email or password");
+    throw new Error("Incorrect password");
   }
 });
 
@@ -65,8 +71,8 @@ export const updateUserProfile = async (req, res) => {
   console.log("Update user profile called");
   console.log("User ID from params:", req.params.id);
   try {
-    const { firstName, lastName, email } = req.body;
-    console.log("Request body:", { firstName, lastName, email });
+    const { firstName, lastName } = req.body; // Removed email from destructuring
+    console.log("Request body:", { firstName, lastName });
 
     const user = await User.findById(req.params.id);
     console.log("user found", user);
@@ -75,7 +81,7 @@ export const updateUserProfile = async (req, res) => {
 
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
-    user.email = email || user.email;
+    // Email is no longer updatable
 
     const updatedUser = await user.save();
     res.json({
