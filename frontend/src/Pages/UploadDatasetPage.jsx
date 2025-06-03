@@ -14,6 +14,7 @@ import {
 import { styled } from "@mui/system";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import Navbar from "../components/Navbar";
+import MultiFileUpload from "../components/MultiFileUpload";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UPLOAD_URL } from "../constants";
@@ -25,8 +26,7 @@ const FileInput = styled("input")({
 const UploadDatasetPage = () => {
   const [datasetName, setDatasetName] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
-  const [yolo, setYolo] = useState(null);
+  const [fileAssociations, setFileAssociations] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -34,10 +34,19 @@ const UploadDatasetPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!datasetName || !image || !yolo) {
+    if (!datasetName || fileAssociations.length === 0) {
       toast.error(
-        "Please fill all fields and upload both image and YOLO file."
+        "Please fill all fields and upload at least one image-YOLO pair."
       );
+      return;
+    }
+
+    // Validate that all associations have both image and YOLO file
+    const invalidAssociations = fileAssociations.filter(
+      (assoc) => !assoc.image || !assoc.yolo
+    );
+    if (invalidAssociations.length > 0) {
+      toast.error("Please ensure all images have associated YOLO files.");
       return;
     }
 
@@ -51,12 +60,25 @@ const UploadDatasetPage = () => {
     formData.append("name", datasetName);
     formData.append("description", description);
     formData.append("userId", user._id);
-    formData.append("image", image);
-    formData.append("yolo", yolo);
+
+    // Add all file associations
+    fileAssociations.forEach((association, index) => {
+      formData.append(`images`, association.image);
+      formData.append(`yolos`, association.yolo);
+      formData.append(
+        `associations[${index}]`,
+        JSON.stringify({
+          imageIndex: index,
+          yoloIndex: index,
+          imageName: association.image.name,
+          yoloName: association.yolo.name,
+        })
+      );
+    });
 
     try {
       setLoading(true);
-      const response = await fetch(`${UPLOAD_URL}/dataset`, {
+      const response = await fetch(`${UPLOAD_URL}/dataset-multiple`, {
         method: "POST",
         body: formData,
       });
@@ -71,8 +93,7 @@ const UploadDatasetPage = () => {
       toast.success("Dataset uploaded and analyzed successfully!");
       setDatasetName("");
       setDescription("");
-      setImage(null);
-      setYolo(null);
+      setFileAssociations([]);
       navigate("/dashboard");
     } catch (err) {
       console.error("❌ Upload error:", err);
@@ -116,44 +137,12 @@ const UploadDatasetPage = () => {
 
                 <Grid item>
                   <Typography variant="subtitle1" gutterBottom>
-                    Upload Image:
+                    Upload Images and YOLO Files:
                   </Typography>
-                  <label htmlFor="image-upload">
-                    <FileInput
-                      accept="image/*"
-                      id="image-upload"
-                      type="file"
-                      onChange={(e) => setImage(e.target.files[0])}
-                    />
-                    <Button
-                      variant="outlined"
-                      component="span"
-                      startIcon={<CloudUploadIcon />}
-                    >
-                      {image ? image.name : "Choose Image"}
-                    </Button>
-                  </label>
-                </Grid>
-
-                <Grid item>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Upload YOLO (.txt) File:
-                  </Typography>
-                  <label htmlFor="yolo-upload">
-                    <FileInput
-                      accept=".txt"
-                      id="yolo-upload"
-                      type="file"
-                      onChange={(e) => setYolo(e.target.files[0])}
-                    />
-                    <Button
-                      variant="outlined"
-                      component="span"
-                      startIcon={<CloudUploadIcon />}
-                    >
-                      {yolo ? yolo.name : "Choose YOLO File"}
-                    </Button>
-                  </label>
+                  <MultiFileUpload
+                    fileAssociations={fileAssociations}
+                    setFileAssociations={setFileAssociations}
+                  />
                 </Grid>
 
                 <Grid item>

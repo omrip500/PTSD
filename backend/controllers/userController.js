@@ -63,9 +63,10 @@ const loginUser = asyncHandler(async (req, res) => {
 // @access  Private
 export const updateUserProfile = async (req, res) => {
   console.log("Update user profile called");
+  console.log("User ID from params:", req.params.id);
   try {
     const { firstName, lastName, email } = req.body;
-    console.log(firstName, lastName, email);
+    console.log("Request body:", { firstName, lastName, email });
 
     const user = await User.findById(req.params.id);
     console.log("user found", user);

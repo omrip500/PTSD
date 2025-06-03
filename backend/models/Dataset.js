@@ -12,10 +12,24 @@ const datasetSchema = new mongoose.Schema(
       required: true,
     },
     modelOutput: {
+      // For single file uploads (backward compatibility)
       original: String, // 📌 קובץ התמונה המקורי (S3)
       yoloFile: String, // 📌 קובץ YOLO המקורי (S3)
       annotated: String, // 📌 תוצאה מסומנת (S3)
       summary: Object, // תוצאות החיזוי
+
+      // For multiple file uploads
+      results: [
+        {
+          original: String,
+          yoloFile: String,
+          annotated: String,
+          summary: Object,
+          imageName: String,
+          yoloName: String,
+        },
+      ],
+      totalSummary: Object, // סיכום כולל של כל התוצאות
     },
   },
   { timestamps: true }

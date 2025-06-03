@@ -176,34 +176,6 @@ const DashboardPage = () => {
                 View Results
               </Button>
             </Box>
-
-            <Box
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: 3,
-                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                p: 3,
-                textAlign: "center",
-                gridColumn: { xs: "span 1", md: "span 2" },
-              }}
-            >
-              <IconButton
-                sx={{ bgcolor: "#0f3460", color: "#fff", mb: 2 }}
-                size="large"
-              >
-                <FileDown size={32} />
-              </IconButton>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Export Analysis Results
-              </Typography>
-              <Button
-                variant="contained"
-                color="success"
-                onClick={() => alert("Export feature coming soon!")}
-              >
-                Export Now
-              </Button>
-            </Box>
           </Box>
         </Container>
       </Box>

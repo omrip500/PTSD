@@ -11,6 +11,7 @@ import cors from "cors";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import analyzeRoutes from "./routes/anaylzeRoute.js";
 import datasetRoutes from "./routes/datasetRoutes.js";
+import exportRoutes from "./routes/exportRoutes.js";
 const port = process.env.PORT || 8000;
 
 const __dirname = path.resolve(); // set __dirname to the current directory
@@ -29,10 +30,17 @@ app.use(cookieParser());
 // This middleware is used to allow cross-origin requests. It is used to allow the frontend to make requests to the backend. The origin is the URL of the frontend, and the credentials are set to true to allow cookies to be sent with the request.
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
+// Log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/datasets", datasetRoutes);
 app.use("/api/analyze", analyzeRoutes);
+app.use("/api/export", exportRoutes);
 
 if (process.env.NODE_ENV === "production") {
   // Set the frontend build folder as static, setting it static means that we can load the files inside the folder directly without having to create a route for it. Otherwise, we would have to create a route for it and then load the file in the route.
