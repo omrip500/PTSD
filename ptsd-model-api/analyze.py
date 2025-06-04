@@ -1,120 +1,109 @@
-import sys
 import os
+import io
+import sys
 import json
+import base64
 from PIL import Image, ImageDraw
 import torch
-import torch.nn as nn
-from torchvision import transforms
+from torchvision import transforms, models
 
-# ===== Step 1: Parse CLI arguments =====
-image_path = sys.argv[1]
-yolo_path = sys.argv[2]
+# ===== Class Names and Colors =====
+class_names = ["Resting", "Surveilling", "Activated", "Resolution"]
+class_colors = {
+    "Resting": "blue",
+    "Surveilling": "green",
+    "Activated": "red",
+    "Resolution": "yellow"
+}
 
-# ===== Step 2: Define output paths =====
-annotated_output_path = "/tmp/annotated_result.png"
-converted_path = os.path.splitext(image_path)[0] + "_converted.png"
-
-# ===== Step 3: Define model (same as in training) =====
-class SimpleCNN(nn.Module):
-    def __init__(self, num_classes):
-        super(SimpleCNN, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2)
-        )
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(64 * 16 * 16, 128),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(128, num_classes)
-        )
-
-    def forward(self, x):
-        x = self.features(x)
-        x = self.classifier(x)
-        return x
-
-# ===== Step 4: Load model and weights =====
+# ===== Load ResNet18 Model =====
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SimpleCNN(num_classes=4).to(device)
+num_classes = len(class_names)
 
-model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "best_model.pth"))
+model = models.resnet18(pretrained=False)
+model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
+
+model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "best_model.pth"))
 model.load_state_dict(torch.load(model_path, map_location=device))
+model = model.to(device)
 model.eval()
 
-# ===== Step 5: Define preprocessing and class names =====
+# ===== Transform for Inference =====
 transform_inference = transforms.Compose([
-    transforms.Resize((64, 64)),
+    transforms.Resize((256, 256)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
-class_names = ["Resting", "Surveilling", "Activated", "Resolution"]
+# ===== Analysis Function =====
+def run_analysis(image_bytes: bytes, yolo_text: str):
+    original_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    annotated_image = original_image.copy()
+    draw = ImageDraw.Draw(annotated_image)
+    width, height = original_image.size
 
-# ===== Step 6: Load image and convert to PNG =====
-original_image = Image.open(image_path).convert("RGB")
-original_image.save(converted_path, "PNG")  # Save a .png version for frontend
-annotated_image = original_image.copy()
-draw = ImageDraw.Draw(annotated_image)
-width, height = annotated_image.size
+    summary = {name: 0 for name in class_names}
 
-# ===== Step 7: Read YOLO annotations =====
-with open(yolo_path, "r") as f:
-    yolo_lines = f.readlines()
+    for idx, line in enumerate(yolo_text.strip().splitlines()):
+        try:
+            parts = list(map(float, line.strip().split()))
+            if len(parts) not in [4, 5]:
+                continue
+            if len(parts) == 4:
+                x_center, y_center, box_w, box_h = parts
+            else:
+                _, x_center, y_center, box_w, box_h = parts
 
-# ===== Step 8: Analyze each cell =====
-summary = {"Resting": 0, "Surveilling": 0, "Activated": 0, "Resolution": 0}
+            x = int((x_center - box_w / 2) * width)
+            y = int((y_center - box_h / 2) * height)
+            w = int(box_w * width)
+            h = int(box_h * height)
 
-for idx, line in enumerate(yolo_lines):
-    try:
-        parts = list(map(float, line.strip().split()))
-        if len(parts) not in [4, 5]:
+            crop = annotated_image.crop((x, y, x + w, y + h))
+            input_tensor = transform_inference(crop).unsqueeze(0).to(device)
+
+            with torch.no_grad():
+                output = model(input_tensor)
+                _, pred_class = torch.max(output, 1)
+
+            class_name = class_names[pred_class.item()]
+            summary[class_name] += 1
+
+            color = class_colors.get(class_name, "white")
+            draw.rectangle((x, y, x + w, y + h), outline=color, width=2)
+            draw.text((x + 2, y - 10), class_name, fill=color)
+
+        except Exception as e:
+            print(f"❌ Error in cell {idx}: {e}", file=sys.stderr)
             continue
 
-        # תיאום יחסיים -> פיקסלים
-        if len(parts) == 4:
-            x_center, y_center, box_w, box_h = parts
-        else:
-            _, x_center, y_center, box_w, box_h = parts
+    # Convert images to base64
+    annotated_buf = io.BytesIO()
+    annotated_image.save(annotated_buf, format="PNG")
+    annotated_b64 = base64.b64encode(annotated_buf.getvalue()).decode("utf-8")
 
-        x = int((x_center - box_w / 2) * width)
-        y = int((y_center - box_h / 2) * height)
-        w = int(box_w * width)
-        h = int(box_h * height)
+    original_buf = io.BytesIO()
+    original_image.save(original_buf, format="PNG")
+    original_b64 = base64.b64encode(original_buf.getvalue()).decode("utf-8")
 
-        # Crop the cell
-        crop = annotated_image.crop((x, y, x + w, y + h))
+    return {
+        "annotated_image_base64": annotated_b64,
+        "converted_original_base64": original_b64,
+        "summary": summary
+    }
 
-        # Prepare for prediction
-        input_tensor = transform_inference(crop).unsqueeze(0).to(device)
+# ===== Optional: CLI Usage for Debugging =====
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python analyze.py <image_path> <yolo_path>", file=sys.stderr)
+        sys.exit(1)
 
-        with torch.no_grad():
-            output = model(input_tensor)
-            _, pred_class = torch.max(output, 1)
+    image_path = sys.argv[1]
+    yolo_path = sys.argv[2]
 
-        class_name = class_names[pred_class.item()]
-        summary[class_name] += 1
+    with open(image_path, "rb") as img_f, open(yolo_path, "r") as yolo_f:
+        image_bytes = img_f.read()
+        yolo_text = yolo_f.read()
 
-        # Draw rectangle + class name
-        draw.rectangle((x, y, x + w, y + h), outline="red", width=2)
-        draw.text((x + 2, y - 10), class_name, fill="red")
-
-    except Exception:
-        continue  # תמשיך אם תא מסוים נפל
-
-# ===== Step 9: Save annotated image =====
-annotated_image.save(annotated_output_path)
-
-# ===== Step 10: Output paths for Node.js =====
-result = {
-    "annotatedImagePath": annotated_output_path,
-    "convertedOriginalPath": converted_path,
-    "summary": summary
-}
-
-print(json.dumps(result))
+    result = run_analysis(image_bytes, yolo_text)
+    print(json.dumps(result))
